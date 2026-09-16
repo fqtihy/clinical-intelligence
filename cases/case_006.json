@@ -1,0 +1,40 @@
+{
+  "id": "case_006",
+  "title": "PFAPA profili (5 yaş altı çocuk)",
+  "description": "Düzenli aralıklarla tekrarlayan ateş atakları; aftöz stomatit, farenjit ve servikal adenit triadı; ataklar arası asemptomatik. Thomas kriterleri profili.",
+  "target_category": "otoinflamatuvar / periyodik ateş sendromu",
+  "expected": {
+    "top1_contains": ["pfapa"],
+    "must_include_any": ["pfapa"],
+    "must_not_include": [],
+    "top1_category": "otoinflamatuvar / periyodik ateş sendromu",
+    "min_diagnoses": 2
+  },
+  "input": {
+    "patient": { "age": 4, "sex": "male" },
+    "symptoms": [
+      { "key": "recurrent_fever", "duration": "8 aydır", "pattern": "yaklaşık her 4-5 haftada bir düzenli tekrarlayan" },
+      { "key": "lymphadenopathy", "duration": "ataklarla birlikte", "pattern": "boyunda, ağrılı" }
+    ],
+    "otherSymptoms": "ağız içinde aftlar ve boğazda kızarıklık (farenjit)",
+    "clinicalNote": "Anne, çocuğunun 8 aydır düzenli aralıklarla (yaklaşık her 4-5 haftada bir) ateşli ataklar geçirdiğini söylüyor. Ataklar 4-5 gün sürüyor ve kendiliğinden düzeliyor. Atak sırasında ağızda aftlar, boğazda kızarıklık ve boyunda ağrılı lenf bezi şişliği oluyor. Ataklar arasında çocuk tamamen sağlıklı ve enerjik.",
+    "laboratoryResults": [
+      { "name": "CRP", "value": "60", "unit": "mg/L", "referenceRange": "<5", "status": "high" },
+      { "name": "Hemoglobin", "value": "11.9", "unit": "g/dL", "referenceRange": "10.5-14", "status": "normal" }
+    ],
+    "symptomTiming": {
+      "onset": "8 ay önce başladı",
+      "attack_duration": "4-5 gün",
+      "periodicity": "her 4-5 haftada bir düzenli",
+      "recovery": "atak kendiliğinden düzeliyor",
+      "inter_attack": "ataklar arasında tamamen asemptomatik"
+    },
+    "medicalHistory": {
+      "family": "bilinmiyor",
+      "medications": "ateş düşürücü",
+      "chronic": "bilinmiyor"
+    },
+    "geographicHistory": { "region": "Türkiye'de yaşıyor" },
+    "preliminaryAssessment": "1. PFAPA Sendromu\n2. Ailevi Akdeniz Ateşi (FMF)\n3. Tekrarlayan viral enfeksiyonlar"
+  }
+}

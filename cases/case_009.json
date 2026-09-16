@@ -1,0 +1,39 @@
+{
+  "id": "case_009",
+  "title": "Negatif ayırıcı: erişkin yaşta PFAPA-benzeri tablo",
+  "description": "PFAPA'ya benzeyen düzenli ateş atakları olan ancak 35 yaşında erişkin bir hasta. Bilgi tabanındaki 'erişkin başlangıçlı PFAPA nadirdir' dışlama kuralının çalıştığını test eder: PFAPA ilk sıraya KONMAMALI, eklem ağrısı nedeniyle romatolojik tanılar öne çıkmalı.",
+  "target_category": null,
+  "expected": {
+    "top1_contains": null,
+    "must_include_any": null,
+    "must_not_include": [],
+    "top1_not": ["pfapa"],
+    "top1_category": null,
+    "min_diagnoses": 1
+  },
+  "input": {
+    "patient": { "age": 35, "sex": "male" },
+    "symptoms": [
+      { "key": "recurrent_fever", "duration": "1 yıldır", "pattern": "yaklaşık her 5 haftada bir düzenli tekrarlayan" },
+      { "key": "joint_pain", "duration": "1 yıldır", "pattern": "diz ve el bileklerinde, ataklar dışında da süren" }
+    ],
+    "otherSymptoms": "ataklar sırasında boğazda kızarıklık",
+    "clinicalNote": "35 yaşında erişkin hasta 1 yıldır düzenli aralıklarla ateşli ataklar geçiriyor. Ataklar sırasında boğazda kızarıklık oluyor ancak ağızda aft yok. Ataklar dışında da süren belirgin eklem ağrısı var; bu özellik atak paterninden bağımsızdır. Çocukluk döneminde benzer ataklar hiç olmamış, hastalık erişkinlikte başlamış.",
+    "laboratoryResults": [
+      { "name": "CRP", "value": "48", "unit": "mg/L", "referenceRange": "<5", "status": "high" },
+      { "name": "Hemoglobin", "value": "14.1", "unit": "g/dL", "referenceRange": "13-17", "status": "normal" }
+    ],
+    "symptomTiming": {
+      "onset": "1 yıl önce, erişkinlikte başladı",
+      "periodicity": "her 5 haftada bir düzenli",
+      "joint_pain": "ataklar dışında da süren"
+    },
+    "medicalHistory": {
+      "family": "bilinmiyor",
+      "medications": "NSAID",
+      "chronic": "bilinmiyor"
+    },
+    "geographicHistory": { "region": "Türkiye'de yaşıyor" },
+    "preliminaryAssessment": "1. PFAPA Sendromu\n2. Still Hastalığı (AOSD)\n3. Ailevi Akdeniz Ateşi (FMF)"
+  }
+}

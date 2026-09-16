@@ -1,0 +1,26 @@
+{
+  "id": "case_010",
+  "title": "Robustluk: minimal girdi",
+  "description": "Tek semptom, laboratuvar yok, öykü alanları boş. Pipeline'ın en zayıf girdiyle bile çökmeden, geçerli şemalı sonuç üretmesini test eder. Hedef kategori yok; yalnızca yapısal doğrulama yapılır.",
+  "target_category": null,
+  "expected": {
+    "top1_contains": null,
+    "must_include_any": null,
+    "must_not_include": null,
+    "top1_category": null,
+    "min_diagnoses": 1
+  },
+  "input": {
+    "patient": { "age": 45, "sex": "unspecified" },
+    "symptoms": [
+      { "key": "fatigue", "duration": "2 haftadır" }
+    ],
+    "otherSymptoms": "",
+    "clinicalNote": "",
+    "laboratoryResults": [],
+    "symptomTiming": {},
+    "medicalHistory": {},
+    "geographicHistory": {},
+    "preliminaryAssessment": ""
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "case_007",
+  "title": "Behçet hastalığı profili",
+  "description": "Tekrarlayan oral ülser (zorunlu bulgu), genital ülser, üveit ve deri lezyonları; İpek Yolu coğrafyası. ISG kriterleri profili.",
+  "target_category": "sistemik vaskülit / otoinflamatuvar",
+  "expected": {
+    "top1_contains": ["behçet", "behcet"],
+    "must_include_any": ["behçet", "behcet"],
+    "must_not_include": [],
+    "top1_category": "sistemik vaskülit / otoinflamatuvar",
+    "min_diagnoses": 1
+  },
+  "input": {
+    "patient": { "age": 28, "sex": "male" },
+    "symptoms": [
+      { "key": "rash", "duration": "3 yıldır", "pattern": "bacaklarda papülopüstüler lezyonlar" },
+      { "key": "fatigue", "duration": "ataklar sırasında", "pattern": "hafif" }
+    ],
+    "otherSymptoms": "yılda 6'dan fazla tekrarlayan ağız ülserleri, genital bölgede tekrarlayan ülserler, gözde kızarıklık ve bulanık görme",
+    "clinicalNote": "Hasta 3 yıldır yılda 6'dan fazla tekrarlayan ağrılı ağız ülserleri ile başvuruyor. Geçen yıl genital bölgede tekrarlayan ülserler başladı. Oftalmoloji tarafından anterior üveit tanısı kondu. Bacaklarda papülopüstüler deri lezyonları var. İğne batma yerinde aşırı hassasiyet (paterji benzeri reaksiyon) tarif ediyor.",
+    "laboratoryResults": [
+      { "name": "CRP", "value": "14", "unit": "mg/L", "referenceRange": "<5", "status": "high" },
+      { "name": "Hemoglobin", "value": "14.8", "unit": "g/dL", "referenceRange": "13-17", "status": "normal" },
+      { "name": "HLA-B51", "value": "pozitif", "unit": "", "referenceRange": "negatif", "status": "high" }
+    ],
+    "symptomTiming": {
+      "onset": "3 yıl önce ağız ülserleriyle başladı",
+      "course": "ülserler tekrarlayarak seyrediyor",
+      "ocular": "geçen yıl üveit atağı geçirdi"
+    },
+    "medicalHistory": {
+      "family": "erkek kardeşinde tekrarlayan ağız ülserleri",
+      "medications": "topikal kortikosteroid",
+      "chronic": "bilinmiyor"
+    },
+    "geographicHistory": { "region": "Türkiye'de doğdu ve yaşıyor" },
+    "preliminaryAssessment": "1. Behçet Hastalığı\n2. Sistemik Lupus Eritematozus (SLE)\n3. Herpetik stomatit"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "id": "case_002",
+  "title": "Klasik SLE profili",
+  "description": "Reprodüktif çağda kadın, eklem ağrısı, malar döküntü, fotosensitivite, aftlar, lökopeni ve hemoglobin düşüklüğü. 2019 EULAR/ACR kriter alanlarını karşılıyor.",
+  "target_category": "otoimmün / romatolojik",
+  "expected": {
+    "top1_contains": ["sle", "lupus"],
+    "must_include_any": ["sle", "lupus"],
+    "must_not_include": [],
+    "top1_category": "otoimmün / romatolojik",
+    "min_diagnoses": 2
+  },
+  "input": {
+    "patient": { "age": 27, "sex": "female" },
+    "symptoms": [
+      { "key": "joint_pain", "duration": "6 haftadır", "pattern": "iki elin küçük eklemlerinde, sabahları belirgin" },
+      { "key": "rash", "duration": "2 aydır", "pattern": "yüzde, güneşe maruz kalınca artıyor" },
+      { "key": "fatigue", "duration": "2 aydır", "pattern": "gün içinde artıyor" }
+    ],
+    "otherSymptoms": "ağız içinde tekrar eden aftlar ve saç dökülmesi",
+    "clinicalNote": "Hasta 6 haftadır el eklemlerinde ağrı ve sabah tutukluğu, 2 aydır yüz ve yanaklarda kelebek şeklinde döküntü tarif ediyor. Döküntü güneşte artıyor. Ağızda tekrar eden aftlar ve belirgin saç dökülmesi var. Kan sayımında lökopeni saptandı.",
+    "laboratoryResults": [
+      { "name": "Hemoglobin", "value": "10.2", "unit": "g/dL", "referenceRange": "12-16", "status": "low" },
+      { "name": "WBC", "value": "3.1", "unit": "10^3/uL", "referenceRange": "4-10", "status": "low" },
+      { "name": "ANA", "value": "1/320", "unit": "titrasyon", "referenceRange": "negatif", "status": "high" },
+      { "name": "CRP", "value": "18", "unit": "mg/L", "referenceRange": "<5", "status": "high" }
+    ],
+    "symptomTiming": {
+      "onset": "yaklaşık 2 ay önce başladı",
+      "duration": "6 haftadan uzun süredir devam ediyor"
+    },
+    "medicalHistory": {
+      "family": "halasında romatolojik hastalık",
+      "medications": "bilinmiyor",
+      "chronic": "bilinmiyor"
+    },
+    "geographicHistory": { "region": "Türkiye'de yaşıyor" },
+    "preliminaryAssessment": "1. Sistemik Lupus Eritematozus (SLE)\n2. Behçet Hastalığı\n3. Viral enfeksiyon"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "case_005",
+  "title": "TRAPS profili (uzun ataklı periyodik ateş)",
+  "description": "Tekrarlayan ateşli ataklar 2 hafta sürüyor, göç eden miyalji ve aile öyküsü. FMF'ten ayırıcı nokta atak süresinin uzunluğu; TRAPS bilgi tabanının karakteristik bulguları.",
+  "target_category": "otoinflamatuvar / periyodik ateş sendromu",
+  "expected": {
+    "top1_contains": ["traps"],
+    "must_include_any": ["traps"],
+    "must_not_include": [],
+    "top1_category": "otoinflamatuvar / periyodik ateş sendromu",
+    "min_diagnoses": 2
+  },
+  "input": {
+    "patient": { "age": 30, "sex": "male" },
+    "symptoms": [
+      { "key": "recurrent_fever", "duration": "2 yıldır", "pattern": "düzensiz aralıklarla tekrarlayan ataklar" },
+      { "key": "myalgia", "duration": "ataklarla birlikte", "pattern": "bacaklardan başlayıp gövdeye göç eden" }
+    ],
+    "otherSymptoms": "ataklar sırasında bacakta eritemli deri lezyonları",
+    "clinicalNote": "Hasta 2 yıldır düzensiz aralıklarla ateşli ataklar geçiriyor. Her atak yaklaşık 2 hafta sürüyor. Atak sırasında bacaklarda başlayıp gövdeye göç eden kas ağrıları ve eritemli deri lezyonları oluyor. Ailesinde benzer uzamış ataklar geçiren iki kişi var.",
+    "laboratoryResults": [
+      { "name": "CRP", "value": "110", "unit": "mg/L", "referenceRange": "<5", "status": "high" },
+      { "name": "SAA", "value": "340", "unit": "mg/L", "referenceRange": "<10", "status": "high" }
+    ],
+    "symptomTiming": {
+      "onset": "2 yıl önce başladı",
+      "attack_duration": "yaklaşık 2 hafta",
+      "pattern": "göç eden kas ağrıları"
+    },
+    "medicalHistory": {
+      "family": "Ailesinde benzer uzamış ateşli ataklar geçiren iki kişi",
+      "medications": "bilinmiyor",
+      "chronic": "bilinmiyor"
+    },
+    "geographicHistory": { "region": "Türkiye'de yaşıyor" },
+    "preliminaryAssessment": "1. TRAPS\n2. Ailevi Akdeniz Ateşi (FMF)\n3. Still Hastalığı"
+  }
+}

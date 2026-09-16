@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clinical Intelligence — AI İkinci Görüş Motoru</title>
+  <meta name="description" content="AI İkinci Görüş Motoru: doktorun ön değerlendirmesindeki hipotezleri kanıtlarla test eder, düşünmediği ihtimalleri arar ve bir sonraki en değerli soruyu önerir.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#/dashboard">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12h4l3-8 4 16 3-8h4"/>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">Clinical Intelligence</span>
+          <span class="brand-sub">AI İkinci Görüş Motoru</span>
+        </span>
+      </a>
+      <nav class="main-nav" aria-label="Ana menü">
+        <a href="#/dashboard" data-route="dashboard">Dashboard</a>
+        <a href="#/new-case" data-route="new-case">Yeni Vaka</a>
+        <a href="#/history" data-route="history">Geçmiş Vakalar</a>
+        <a href="#/settings" data-route="settings">Ayarlar</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="disclaimer-banner" role="note">
+    Yalnızca sentetik/anonim vaka kullanın; gerçek hasta verisi kabul edilmez. Bu prototip klinik karar desteği sağlar, nihai karar sağlık profesyoneline aittir.
+  </div>
+
+  <main id="app" class="app-content"></main>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

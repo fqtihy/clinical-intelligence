@@ -1,0 +1,41 @@
+{
+  "id": "case_008",
+  "title": "AOSD (Erişkin Still) profili",
+  "description": "Genç erişkinde ≥39°C yüksek ateş, 2 haftadan uzun artralji, somon rengi uçucu döküntü ve boğaz ağrısı; yüksek ferritin. Yamaguchi/Fautrel kriter profili.",
+  "target_category": "otoinflamatuvar / romatolojik",
+  "expected": {
+    "top1_contains": ["still", "aosd"],
+    "must_include_any": ["still", "aosd"],
+    "must_not_include": [],
+    "top1_category": "otoinflamatuvar / romatolojik",
+    "min_diagnoses": 2
+  },
+  "input": {
+    "patient": { "age": 29, "sex": "female" },
+    "symptoms": [
+      { "key": "joint_pain", "duration": "3 haftadır", "pattern": "bilek ve dizlerde, gün içinde değişken" },
+      { "key": "rash", "duration": "2 haftadır", "pattern": "gövde ve kollarda, ateşle birlikte belirginleşen uçucu döküntü" }
+    ],
+    "otherSymptoms": "39°C üstü yüksek ateş ve boğaz ağrısı",
+    "clinicalNote": "Hasta 3 haftadır geceleri 39°C üzerindeki yüksek ateş atakları, bilek ve dizlerde eklem ağrıları tarif ediyor. Ateş yükselirken gövde ve kollarda somon rengi, silinip kaybolan uçucu bir döküntü belirginleşiyor. Boğaz ağrısı sürekli. Ateş kesintisiz 3 haftadır sürüyor; tekrarlayan ayrı ataklar halinde değil.",
+    "laboratoryResults": [
+      { "name": "CRP", "value": "130", "unit": "mg/L", "referenceRange": "<5", "status": "high" },
+      { "name": "Ferritin", "value": "8200", "unit": "ng/mL", "referenceRange": "13-150", "status": "high" },
+      { "name": "WBC", "value": "15.2", "unit": "10^3/uL", "referenceRange": "4-10", "status": "high" },
+      { "name": "RF", "value": "negatif", "unit": "", "referenceRange": "negatif", "status": "normal" },
+      { "name": "ANA", "value": "negatif", "unit": "", "referenceRange": "negatif", "status": "normal" }
+    ],
+    "symptomTiming": {
+      "onset": "3 hafta önce başladı",
+      "duration": "3 haftadır kesintisiz devam ediyor",
+      "fever": "39°C üstü, geceleri belirgin"
+    },
+    "medicalHistory": {
+      "family": "bilinmiyor",
+      "medications": "bilinmiyor",
+      "chronic": "bilinmiyor"
+    },
+    "geographicHistory": { "region": "Türkiye'de yaşıyor" },
+    "preliminaryAssessment": "1. Still Hastalığı (AOSD)\n2. Sistemik Lupus Eritematozus (SLE)\n3. Lenfoma\n4. Enfeksiyöz Mononükleoz"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "case_003",
+  "title": "Akut kendi kendini sınırlayan viral enfeksiyon",
+  "description": "Tek seferlik, birkaç gündür süren ateş, boğaz ağrısı, miyalji ve baş ağrısı; tekrarlayan atak yok. Kendi kendini sınırlayan seyir.",
+  "target_category": "enfeksiyöz / kendi kendini sınırlayan",
+  "expected": {
+    "top1_contains": ["viral", "enfeksiyon"],
+    "must_include_any": ["viral", "enfeksiyon"],
+    "must_not_include": [],
+    "top1_category": "enfeksiyöz / kendi kendini sınırlayan",
+    "min_diagnoses": 1
+  },
+  "input": {
+    "patient": { "age": 34, "sex": "male" },
+    "symptoms": [
+      { "key": "myalgia", "duration": "3 gündür", "pattern": "vücut genelinde" },
+      { "key": "headache", "duration": "3 gündür", "pattern": "alın bölgesinde" },
+      { "key": "fatigue", "duration": "3 gündür", "pattern": "belirgin halsizlik" }
+    ],
+    "otherSymptoms": "boğaz ağrısı ve 38.5 derece ateş",
+    "clinicalNote": "Hasta 3 gün önce başlayan ateş, boğaz ağrısı, kas ağrıları ve baş ağrısı ile başvuruyor. Ev işinde yaklaşan iki kişi daha benzer şikayetler yaşamış. Şikayetlerin birkaç gün içinde kendiliğinden düzelmesi bekleniyor. Önceki yıllarda benzer atak öyküsü yok.",
+    "laboratoryResults": [
+      { "name": "CRP", "value": "22", "unit": "mg/L", "referenceRange": "<5", "status": "high" },
+      { "name": "Hemoglobin", "value": "14.5", "unit": "g/dL", "referenceRange": "13-17", "status": "normal" }
+    ],
+    "symptomTiming": {
+      "onset": "3 gün önce aniden başladı",
+      "expected_course": "birkaç gün içinde kendiliğinden düzelme bekleniyor",
+      "recurrence": "yok"
+    },
+    "medicalHistory": {
+      "family": "bilinmiyor",
+      "medications": "parasetamol",
+      "chronic": "bilinmiyor"
+    },
+    "geographicHistory": { "region": "Türkiye'de yaşıyor" },
+    "preliminaryAssessment": "1. Viral enfeksiyon\n2. Akut bakteriyel farenjit"
+  }
+}

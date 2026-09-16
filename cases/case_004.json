@@ -1,0 +1,39 @@
+{
+  "id": "case_004",
+  "title": "Enfeksiyöz mononükleoz profili",
+  "description": "Genç erişkinde ateş, boğaz ağrısı, servikal lenfadenopati ve belirgin yorgunluk; tekrarlayan atak yok, tek seferlik hastalık epizodu.",
+  "target_category": "enfeksiyöz / viral",
+  "expected": {
+    "top1_contains": ["mononükleoz", "mononükleoz"],
+    "must_include_any": ["mononükleoz", "ebv", "epstein"],
+    "must_not_include": [],
+    "top1_category": "enfeksiyöz / viral",
+    "min_diagnoses": 2
+  },
+  "input": {
+    "patient": { "age": 21, "sex": "female" },
+    "symptoms": [
+      { "key": "fatigue", "duration": "10 gündür", "pattern": "giderek artan, gün içinde kötüleşen" },
+      { "key": "lymphadenopathy", "duration": "10 gündür", "pattern": "boyunda ve koltuk altında ağrısız şişlikler" }
+    ],
+    "otherSymptoms": "boğaz ağrısı ve 38-39 derece arası ateş, gece terlemesi",
+    "clinicalNote": "Üniversite öğrencisi hasta 10 gündür süren yüksek ateş, belirgin boğaz ağrısı, boyunda lenf bezi şişlikleri ve halsizlik ile başvuruyor. Yutkunmakta zorlanıyor. Gece terlemeleri var. Bu dönemde ilk kez bu kadar uzun süren bir hastalık geçiriyor; benzer epizot öyküsü yok.",
+    "laboratoryResults": [
+      { "name": "CRP", "value": "45", "unit": "mg/L", "referenceRange": "<5", "status": "high" },
+      { "name": "Hemoglobin", "value": "12.4", "unit": "g/dL", "referenceRange": "12-16", "status": "normal" },
+      { "name": "ALT", "value": "78", "unit": "U/L", "referenceRange": "<35", "status": "high" }
+    ],
+    "symptomTiming": {
+      "onset": "10 gün önce kademeli başladı",
+      "duration": "10 gündür sürekli devam ediyor",
+      "recurrence": "yok"
+    },
+    "medicalHistory": {
+      "family": "bilinmiyor",
+      "medications": "bilinmiyor",
+      "chronic": "bilinmiyor"
+    },
+    "geographicHistory": { "region": "Türkiye'de yaşıyor, yurtta kalıyor" },
+    "preliminaryAssessment": "1. Enfeksiyöz Mononükleoz\n2. Akut streptokokal farenjit\n3. Viral enfeksiyon"
+  }
+}

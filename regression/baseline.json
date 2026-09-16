@@ -1,0 +1,245 @@
+{
+  "meta": {
+    "note": "Baseline regression snapshot. Beklentileri karşılayan son bilinen durum. Güncellemek için: npm run test:regression:update",
+    "schemaVersion": "1.3.0",
+    "provider": "deepseek",
+    "model": "deepseek-chat",
+    "updatedAt": "2026-09-01T23:13:27.181Z"
+  },
+  "cases": {
+    "case_001": {
+      "top1": "Ailevi Akdeniz Ateşi (FMF)",
+      "diagnosis_names": [
+        "Ailevi Akdeniz Ateşi (FMF)",
+        "TRAPS (TNF Reseptör İlişkili Periyodik Sendrom)",
+        "PFAPA Sendromu",
+        "Behçet Hastalığı",
+        "Still Hastalığı"
+      ],
+      "relevance_order": [
+        "high",
+        "moderate",
+        "moderate",
+        "low",
+        "low"
+      ],
+      "diagnosis_count": 5,
+      "audit_flag_count": 6,
+      "missing_info_count": 5,
+      "evidence_link_count": 6,
+      "hypothesis_count": 3,
+      "unconsidered_count": 1,
+      "prompt_version": "3.0",
+      "schema_version": "1.3.0"
+    },
+    "case_002": {
+      "top1": "Sistemik Lupus Eritematozus (SLE)",
+      "diagnosis_names": [
+        "Sistemik Lupus Eritematozus (SLE)",
+        "Behçet Hastalığı",
+        "Still Hastalığı",
+        "Viral enfeksiyon"
+      ],
+      "relevance_order": [
+        "high",
+        "moderate",
+        "low",
+        "low"
+      ],
+      "diagnosis_count": 4,
+      "audit_flag_count": 3,
+      "missing_info_count": 5,
+      "evidence_link_count": 6,
+      "hypothesis_count": 3,
+      "unconsidered_count": 1,
+      "prompt_version": "3.0",
+      "schema_version": "1.3.0"
+    },
+    "case_003": {
+      "top1": "Viral enfeksiyon",
+      "diagnosis_names": [
+        "Viral enfeksiyon",
+        "Enfeksiyöz Mononükleoz",
+        "Ailevi Akdeniz Ateşi (FMF)",
+        "Still Hastalığı"
+      ],
+      "relevance_order": [
+        "high",
+        "moderate",
+        "low",
+        "low"
+      ],
+      "diagnosis_count": 4,
+      "audit_flag_count": 5,
+      "missing_info_count": 5,
+      "evidence_link_count": 10,
+      "hypothesis_count": 2,
+      "unconsidered_count": 1,
+      "prompt_version": "3.0",
+      "schema_version": "1.3.0"
+    },
+    "case_004": {
+      "top1": "Enfeksiyöz Mononükleoz",
+      "diagnosis_names": [
+        "Enfeksiyöz Mononükleoz",
+        "Still Hastalığı",
+        "Viral enfeksiyon",
+        "Ailevi Akdeniz Ateşi (FMF)",
+        "PFAPA Sendromu"
+      ],
+      "relevance_order": [
+        "high",
+        "moderate",
+        "moderate",
+        "low",
+        "low"
+      ],
+      "diagnosis_count": 5,
+      "audit_flag_count": 4,
+      "missing_info_count": 5,
+      "evidence_link_count": 12,
+      "hypothesis_count": 3,
+      "unconsidered_count": 1,
+      "prompt_version": "3.0",
+      "schema_version": "1.3.0"
+    },
+    "case_005": {
+      "top1": "TRAPS (TNF Reseptör İlişkili Periyodik Sendrom)",
+      "diagnosis_names": [
+        "TRAPS (TNF Reseptör İlişkili Periyodik Sendrom)",
+        "Ailevi Akdeniz Ateşi (FMF)",
+        "Still Hastalığı",
+        "Behçet Hastalığı",
+        "PFAPA Sendromu"
+      ],
+      "relevance_order": [
+        "high",
+        "moderate",
+        "moderate",
+        "low",
+        "low"
+      ],
+      "diagnosis_count": 5,
+      "audit_flag_count": 5,
+      "missing_info_count": 5,
+      "evidence_link_count": 6,
+      "hypothesis_count": 3,
+      "unconsidered_count": 1,
+      "prompt_version": "3.0",
+      "schema_version": "1.3.0"
+    },
+    "case_006": {
+      "top1": "PFAPA Sendromu",
+      "diagnosis_names": [
+        "PFAPA Sendromu",
+        "Ailevi Akdeniz Ateşi (FMF)",
+        "Tekrarlayan viral enfeksiyonlar",
+        "Enfeksiyöz Mononükleoz",
+        "TRAPS (TNF Reseptör İlişkili Periyodik Sendrom)"
+      ],
+      "relevance_order": [
+        "high",
+        "moderate",
+        "low",
+        "low",
+        "low"
+      ],
+      "diagnosis_count": 5,
+      "audit_flag_count": 4,
+      "missing_info_count": 5,
+      "evidence_link_count": 6,
+      "hypothesis_count": 3,
+      "unconsidered_count": 2,
+      "prompt_version": "3.0",
+      "schema_version": "1.3.0"
+    },
+    "case_007": {
+      "top1": "Behçet Hastalığı",
+      "diagnosis_names": [
+        "Behçet Hastalığı",
+        "Ailevi Akdeniz Ateşi (FMF)",
+        "TRAPS (TNF Reseptör İlişkili Periyodik Sendrom)"
+      ],
+      "relevance_order": [
+        "high",
+        "low",
+        "low"
+      ],
+      "diagnosis_count": 3,
+      "audit_flag_count": 4,
+      "missing_info_count": 5,
+      "evidence_link_count": 6,
+      "hypothesis_count": 3,
+      "unconsidered_count": 2,
+      "prompt_version": "3.0",
+      "schema_version": "1.3.0"
+    },
+    "case_008": {
+      "top1": "Still Hastalığı",
+      "diagnosis_names": [
+        "Still Hastalığı",
+        "Sistemik Lupus Eritematozus (SLE)",
+        "Enfeksiyöz Mononükleoz",
+        "Ailevi Akdeniz Ateşi (FMF)"
+      ],
+      "relevance_order": [
+        "high",
+        "moderate",
+        "moderate",
+        "low"
+      ],
+      "diagnosis_count": 4,
+      "audit_flag_count": 5,
+      "missing_info_count": 5,
+      "evidence_link_count": 7,
+      "hypothesis_count": 4,
+      "unconsidered_count": 2,
+      "prompt_version": "3.0",
+      "schema_version": "1.3.0"
+    },
+    "case_009": {
+      "top1": "Still Hastalığı",
+      "diagnosis_names": [
+        "Still Hastalığı",
+        "Ailevi Akdeniz Ateşi (FMF)",
+        "PFAPA Sendromu",
+        "Sistemik Lupus Eritematozus (SLE)",
+        "TRAPS (TNF Reseptör İlişkili Periyodik Sendrom)"
+      ],
+      "relevance_order": [
+        "high",
+        "high",
+        "moderate",
+        "low",
+        "low"
+      ],
+      "diagnosis_count": 5,
+      "audit_flag_count": 3,
+      "missing_info_count": 5,
+      "evidence_link_count": 11,
+      "hypothesis_count": 2,
+      "unconsidered_count": 2,
+      "prompt_version": "3.0",
+      "schema_version": "1.3.0"
+    },
+    "case_010": {
+      "top1": "Enfeksiyöz Mononükleoz",
+      "diagnosis_names": [
+        "Enfeksiyöz Mononükleoz",
+        "Viral enfeksiyon"
+      ],
+      "relevance_order": [
+        "moderate",
+        "low"
+      ],
+      "diagnosis_count": 2,
+      "audit_flag_count": 0,
+      "missing_info_count": 5,
+      "evidence_link_count": 2,
+      "hypothesis_count": 0,
+      "unconsidered_count": 0,
+      "prompt_version": "3.0",
+      "schema_version": "1.3.0"
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "case_001",
+  "title": "Klasik FMF profili",
+  "description": "Genç hasta, 2-3 günlük tekrarlayan ateşli ataklar, karın ağrısı (serozit), aile öyküsü ve Akdeniz coğrafyası. Bilgi tabanındaki Tel Hashomer büyük kriterlerini karşılıyor.",
+  "target_category": "otoinflamatuvar / periyodik ateş sendromu",
+  "expected": {
+    "top1_contains": ["fmf", "ailevi akdeniz"],
+    "must_include_any": ["fmf", "ailevi akdeniz"],
+    "must_not_include": [],
+    "top1_category": "otoinflamatuvar / periyodik ateş sendromu",
+    "min_diagnoses": 2
+  },
+  "input": {
+    "patient": { "age": 19, "sex": "female" },
+    "symptoms": [
+      { "key": "recurrent_fever", "duration": "1 yıldır", "pattern": "her 2-3 haftada bir tekrarlayan ataklar" },
+      { "key": "abdominal_pain", "duration": "ataklarla birlikte", "pattern": "atakların ilk gününde en belirgin" }
+    ],
+    "otherSymptoms": "ataklar sırasında ayak bileğinde erizipel benzeri kızarıklık",
+    "clinicalNote": "Hasta 1 yıldır her 2-3 haftada bir ateşli atak geçiriyor. Ataklar 2-3 gün sürüyor ve kendiliğinden düzeliyor. Ataklar arasında tamamen iyi durumda. Atak sırasında şiddetli karın ağrısı ve ayak bileğinde erizipel benzeri kızarıklık oluyor. Anne ve amcasında benzer ataklar öyküsü var.",
+    "laboratoryResults": [
+      { "name": "CRP", "value": "92", "unit": "mg/L", "referenceRange": "<5", "status": "high" },
+      { "name": "Hemoglobin", "value": "12.8", "unit": "g/dL", "referenceRange": "12-16", "status": "normal" }
+    ],
+    "symptomTiming": {
+      "onset": "1 yıl önce başladı",
+      "attack_duration": "2-3 gün",
+      "periodicity": "her 2-3 haftada bir",
+      "recovery": "atak kendiliğinden düzeliyor"
+    },
+    "medicalHistory": {
+      "family": "Anne ve amcasında benzer tekrarlayan ateş atakları",
+      "medications": "bilinmiyor",
+      "chronic": "bilinmiyor"
+    },
+    "geographicHistory": { "region": "Türkiye'de doğdu ve yaşıyor, Akdeniz bölgesi" },
+    "preliminaryAssessment": "1. Ailevi Akdeniz Ateşi (FMF)\n2. TRAPS\n3. PFAPA Sendromu"
+  }
+}

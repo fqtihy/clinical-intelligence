@@ -1,0 +1,19 @@
+node_modules/
+
+# Secrets and local environment files
+.env*
+!.env.example
+
+# Runtime output and generated reports
+logs/
+*.log
+regression/reports/
+
+# Archives and temporary maintenance artifacts
+*.rar
+*.zip
+*.7z
+*patch*
+*maintenance*
+
+.DS_Store

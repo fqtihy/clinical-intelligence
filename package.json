@@ -1,0 +1,24 @@
+{
+  "name": "clinical-intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clinical Intelligence / Clinical Decision Support Prototype",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node regression/run_regression.js --mock",
+    "test:regression": "node regression/run_regression.js",
+    "test:regression:update": "node regression/run_regression.js --update-baseline",
+    "test:regression:mock": "node regression/run_regression.js --mock",
+    "test:pii": "node pii_guard_test.js",
+    "test:synthetic-cases": "node synthetic_cases_test.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
