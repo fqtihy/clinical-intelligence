@@ -1,12 +1,3 @@
-// Kürasyonlu güvenilir tıbbi kaynak tabanı.
-// Bu dosya uygulamanın BİLGİ katmanıdır: modelin belleği değil, kanıtın kendisi buradan gelir.
-// Her kayıt, aday durumun sınıflama kriterlerini ve kanıt örüntülerini gerçek kılavuzlara
-// atıfla taşır. evidenceService bu tabloyu tarar; model yalnızca çıkarılan kanıtı sentezler.
-//
-// Pattern türleri: 'symptom' (semptom adı/İngilizce), 'text' (klinik öykü/diğer semptom metni),
-// 'lab' (laboratuvar adı + isteğe bağlı status), 'timing' (semptom zamanlaması),
-// 'history' (tıbbi öykü), 'geography' (coğrafi öykü), 'demographic' (yaş/cinsiyet).
-// weight > 0 destekleyici kanıt, weight < 0 zayıflatıcı (çelişkili) kanıttır.
 
 module.exports = [
   {

@@ -1,7 +1,3 @@
-// PROMPT BÖLÜMÜ: output_constraints_prompt
-// Uzunluk sınırları + JSON çıktı şeması + "yalnızca JSON" kapanışı.
-// Şema bloğu makine şemasından (server/schemas/analysisSchema.js) üretilir:
-// prompt ile backend doğrulayıcısı aynı kaynaktan beslenir.
 const { schemaToPromptText } = require('../../schemas/analysisSchema');
 
 module.exports = {

@@ -1,4 +1,3 @@
-// Task-unique logic test: analysisService retry + robust JSON extraction (network-free).
 const path = require('path');
 const PROJECT = 'C:/Users/Fatih/Desktop/proje';
 
@@ -98,7 +97,6 @@ const VALID_FENCED = '```json\n' + JSON.stringify(VALID_JSON, null, 2) + '\n```'
 const TRUNCATED = '{"case_summary":"21 yasinda kadin tekrarlayan ates","clinical_pattern":"tekrarl';
 const GARBAGE = 'Merhaba, analiz sonucu:\n' + JSON.stringify(VALID_JSON) + '\nUmarim yardimci olur.';
 
-// Formun gercekten gonderdigi gibi: tum opsiyonel alanlar bos string olarak var.
 const PAYLOAD = {
   patient: { age: 21, sex: 'female' },
   symptoms: [{ key: 'recurrent_fever', label: 'Ateş', duration: '2 hafta' }],
@@ -117,10 +115,6 @@ function assert(cond, msg) {
   else { failures++; console.error('  FAIL:', msg); }
 }
 
-// Tek sabit stub: davranisi test senaryolarina gore degisir.
-// analysisService istemciyi modul nesnesi uzerinden cagirdigi icin (analiz zamaninda
-// ozellik erisimi), istemcinin exports nesnesindeki createChatCompletion ozelligini
-// degistirmek yeterlidir; require.cache degisimine gerek yoktur.
 let handler = null;
 function installHandler(fn) {
   handler = fn;
@@ -131,7 +125,6 @@ function installHandler(fn) {
 async function run() {
   const { analyzeCase } = require(path.join(PROJECT, 'server/services/ai/analysisService.js'));
 
-  // (a) Gecerli JSON + fences -> basarili, 1 cagri, bilinmiyor dolgusu
   {
     let calls = 0;
     installHandler(async ({ messages }) => {
@@ -185,7 +178,6 @@ async function run() {
     console.log('  OK scenario (a)');
   }
 
-  // (b) Kesik JSON + finishReason length -> retry, 2. denemede basari
   {
     let calls = 0;
     installHandler(async ({ messages, temperature }) => {
@@ -205,7 +197,6 @@ async function run() {
     console.log('  OK scenario (b)');
   }
 
-  // (c) Her iki denemede de gecersiz JSON -> dost AI_INVALID_JSON hatasi
   {
     let calls = 0;
     installHandler(async () => { calls++; return { content: 'Bu JSON degil', finishReason: 'stop' }; });
@@ -220,7 +211,6 @@ async function run() {
     console.log('  OK scenario (c)');
   }
 
-  // (d) Gecersiz JSON (parse hatasi), 2. denemede gecerli -> retry calisti
   {
     let calls = 0;
     installHandler(async ({ temperature }) => {
@@ -235,7 +225,6 @@ async function run() {
     console.log('  OK scenario (d)');
   }
 
-  // (f) Çelişki motoru normalizasyonu: aleyhte bulgu yoksa/geçersizse severity none'a düşer
   {
     const { parseAndValidateAiOutput } = require(path.join(PROJECT, 'server/services/ai/analysisService.js'));
     const run = (d) => parseAndValidateAiOutput(JSON.stringify({
@@ -253,7 +242,6 @@ async function run() {
     console.log('  OK scenario (f)');
   }
 
-  // (g) Doktor iki yönlü çalışma: eksik/bozuk alanlar güvenli boş değerlere döner
   {
     const { parseAndValidateAiOutput } = require(path.join(PROJECT, 'server/services/ai/analysisService.js'));
     const out = parseAndValidateAiOutput(JSON.stringify({ case_summary: 'x', differential_diagnoses: [{ name: 'A', relevance: 'high' }] }));
@@ -277,7 +265,6 @@ async function run() {
     console.log('  OK scenario (g)');
   }
 
-  // (h) Kanit agaci normalizasyonu: gecersiz dugum/id/tip guvenli sekilde elenir veya normalize edilir
   {
     const { parseAndValidateAiOutput } = require(path.join(PROJECT, 'server/services/ai/analysisService.js'));
     const tree = {
@@ -318,8 +305,6 @@ async function run() {
     console.log('  OK scenario (h)');
   }
 
-  // (i) İkinci görüş motoru bütünlük kuralı: hipotezler yalnızca doktor listesinden,
-  //     alternatifler yalnızca listede olmayanlardan; geçersiz status challenged'a düşer.
   {
     const { parseAndValidateAiOutput } = require(path.join(PROJECT, 'server/services/ai/analysisService.js'));
     const doctorList = ['Enfeksiyon', 'SLE'];
@@ -359,7 +344,6 @@ async function run() {
     console.log('  OK scenario (i)');
   }
 
-  // (e) Zorunlu alan dogrulamasi korunuyor
   {
     const { normalizeAndValidate } = require(path.join(PROJECT, 'server/validation/caseNormalizer.js'));
     try {

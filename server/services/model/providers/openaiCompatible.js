@@ -1,28 +1,7 @@
-// OpenAI-uyumlu chat completions istemci fabrikası.
-// DeepSeek, OpenAI, vLLM/Ollama (yerel) gibi tüm OpenAI-uyumlu uç noktalar
-// bu fabrikadan üretilir; pipeline yalnızca createChatCompletion sözleşmesini görür.
-// Böylece model değiştirmek = config'de provider adı + anahtar değiştirmek.
 const logger = require('../../../logger');
 const { ApiError } = require('../../../middleware/errorHandler');
 
-/**
- * OpenAI-uyumlu bir model istemcisi üretir.
- * @param {object} opts
- * @param {string} opts.name - Provider adı (log ve metadata için)
- * @param {string} opts.baseUrl - Örn. https://api.deepseek.com veya https://api.openai.com/v1
- * @param {string} opts.model - Model adı
- * @param {string} opts.apiKey - Bearer token
- * @param {number} opts.timeoutMs - İstek zaman aşımı
- * @param {number} opts.maxTokens - Maksimum çıktı tokenı
- * @param {number} opts.temperature - Varsayılan sıcaklık
- * @returns {{ createChatCompletion: Function, isConfigured: Function, name: string, model: string }}
- */
 function createOpenAICompatibleClient({ name, baseUrl, model, apiKey, timeoutMs, maxTokens, temperature }) {
-  /**
-   * @param {Array<{role: string, content: string}>} opts.messages
-   * @param {number} [opts.temperature] - İsteğe bağlı sıcaklık (yeniden denemede düşürülür)
-   * @returns {Promise<{content: string, finishReason: string}>}
-   */
   async function createChatCompletion({ messages, temperature: tempOverride } = {}) {
     if (!apiKey) {
       logger.error(name, 'API anahtarı bulunamadı (sağlayıcı anahtarı boş)');
@@ -90,7 +69,6 @@ function createOpenAICompatibleClient({ name, baseUrl, model, apiKey, timeoutMs,
       return {
         content: content.trim(),
         finishReason: data.choices?.[0]?.finish_reason || 'stop',
-        // Metrik katmanı için ham usage bilgisi (token sayıları) dışarı sızar
         usage: {
           prompt_tokens: data.usage?.prompt_tokens,
           completion_tokens: data.usage?.completion_tokens,

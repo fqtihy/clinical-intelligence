@@ -1,12 +1,3 @@
-// Bağımlılıksız JSON Schema alt kümesi doğrulayıcı.
-// server/schemas/analysisSchema.js içindeki şemayı model çıktısına karşı denetler.
-// Desteklenen anahtar kelimeler: type (string | string[]), enum, required,
-// properties, items, minItems, maxItems. Bilinmeyen ek alanlar (extra keys) tolere edilir;
-// model fazladan alan döndürse bile bu bir hata değildir (lenient sözleşme).
-//
-// Çıktı sözleşmesi:
-//   { valid: boolean, errors: [{ path, code, message }] }
-//   path örn. "$.differential_diagnoses[0].relevance"
 
 function isPlainObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -27,18 +18,10 @@ function typeMatches(value, expectedType) {
     case 'null':
       return value === null;
     default:
-      // Bilinmeyen tip tanımı kısıtlamaz
       return true;
   }
 }
 
-/**
- * Değeri şemaya karşı doğrular.
- * @param {any} value - Doğrulanacak değer (model çıktısı veya normalize edilmiş sonuç)
- * @param {object} schema - analysisSchema.js formatında şema düğümü
- * @param {string} [path] - Kök yol (varsayılan '$')
- * @returns {{ valid: boolean, errors: Array<{path: string, code: string, message: string}> }}
- */
 function validateAgainstSchema(value, schema, path = '$') {
   const errors = [];
   walk(value, schema, path, errors);
@@ -52,7 +35,6 @@ function addError(errors, path, code, message) {
 function walk(value, schema, path, errors) {
   if (!schema || typeof schema !== 'object') return;
 
-  // 1) Tip kontrolü (type string veya string[] olabilir)
   const expectedTypes = Array.isArray(schema.type) ? schema.type : schema.type ? [schema.type] : [];
   if (expectedTypes.length > 0) {
     const ok = expectedTypes.some((t) => typeMatches(value, t));
@@ -67,7 +49,6 @@ function walk(value, schema, path, errors) {
     }
   }
 
-  // 2) Enum kontrolü
   if (schema.enum && !schema.enum.includes(value)) {
     addError(
       errors,
@@ -78,7 +59,6 @@ function walk(value, schema, path, errors) {
     return;
   }
 
-  // 3) Nesne: zorunlu alanlar + properties
   if (schema.type === 'object') {
     if (Array.isArray(schema.required)) {
       for (const key of schema.required) {
@@ -96,7 +76,6 @@ function walk(value, schema, path, errors) {
     return;
   }
 
-  // 4) Dizi: eleman şeması + sınırlar
   if (schema.type === 'array') {
     if (typeof schema.minItems === 'number' && value.length < schema.minItems) {
       addError(errors, path, 'MIN_ITEMS', `en az ${schema.minItems} öğe gerekli, bulunan: ${value.length}`);
@@ -111,11 +90,6 @@ function walk(value, schema, path, errors) {
   }
 }
 
-/**
- * Hata listesini log/retry mesajı için tek satırlık okunabilir özetlere indirir.
- * @param {Array<{path: string, code: string, message: string}>} errors
- * @param {number} [max] - En fazla kaç hata döndürülür
- */
 function summarizeSchemaErrors(errors, max = 8) {
   if (!Array.isArray(errors)) return [];
   return errors.slice(0, max).map((e) => `${e.path}: ${e.message}`);

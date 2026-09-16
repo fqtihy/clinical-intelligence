@@ -1,11 +1,3 @@
-// PROMPT BÖLÜMÜ: structured_reasoning
-// "AI neden bunu yaptı?" motoru: modelin gizli düşünce zinciri GÖSTERİLMEZ.
-// Bunun yerine her tanı için üç yapılandırılmış, denetlenebilir liste istenir:
-//   supporting_findings     -> tanıyı destekleyen bulgular (✓)
-//   contradicting_findings  -> tanıyı zayıflatan bulgular (⚠)
-//   discriminative_findings -> diğer adaylardan ayıran bulgular (★)
-// Bu, "neden" sorusuna yapılandırılmış, denetlenebilir bir cevaptır; gizli
-// muhakemenin ifşa edilmesi değildir.
 module.exports = {
   id: 'structured_reasoning',
   title: 'STRUCTURED REASONING SUMMARY',

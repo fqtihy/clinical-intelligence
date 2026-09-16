@@ -1,9 +1,3 @@
-// Structured Output sistemi testi:
-// 1) Şema modülü + üretilen prompt bloğu
-// 2) extractJson onarım senaryoları (JSON dışı öncü metin, markdown çiti,
-//    akıllı tırnak, artık virgül, kesik çıktı)
-// 3) İki katmanlı şema doğrulaması (geçerli çıktı kabul, bozuk çıktı reddedilir)
-// 4) /api/schema uç noktası
 const path = require('path');
 const assert = require('assert');
 
@@ -27,7 +21,6 @@ const { validateAgainstSchema, summarizeSchemaErrors } = require(path.join(PROJE
 const { extractJson, extractJsonDetailed, parseAndValidateAiOutput } = require(path.join(PROJECT, 'server/pipeline/responseValidator'));
 const { buildRetryInstruction, buildSystemPrompt } = require(path.join(PROJECT, 'server/prompts/systemPrompt'));
 
-// ------------------------------------------------------------------
 console.log('\n[1] Şema modülü ve prompt üretimi');
 check('şema nesnesi objektir ve required alanları taşır', () => {
   assert.strictEqual(ANALYSIS_SCHEMA.type, 'object');
@@ -43,7 +36,6 @@ check('şema sürümü tanımlı', () => {
 check('üretilen prompt bloğu geçerli JSON ayrıştırılıyor (açıklama metinleri tırnak içinde)', () => {
   const block = schemaToPromptText();
   assert.ok(block.startsWith('{'));
-  // Prompt bloğu sözde-JSON'dur; alan adlarının şemayla birebir aynı olduğunu doğrula
   for (const key of Object.keys(ANALYSIS_SCHEMA.properties)) {
     assert.ok(block.includes(`"${key}"`), `blokta ${key} yok`);
   }
@@ -54,7 +46,6 @@ check('sistem promptu şema bloğunu içeriyor', () => {
   assert.ok(prompt.includes('Return only JSON'));
 });
 
-// ------------------------------------------------------------------
 console.log('\n[2] JSON çıkarımı ve onarım');
 check('düz JSON', () => {
   const { value, repairs } = extractJsonDetailed('{"a": 1}');
@@ -90,8 +81,6 @@ check('kesik (token sınırında kesilmiş) JSON onarımı', () => {
   assert.ok(repairs.includes('unclosed-brackets'));
 });
 check('onarılamaz bozuk çıktı -> null -> AI_INVALID_JSON (retry devreye girer)', () => {
-  // Tırnağın dizge ortasında kapanması belirsizlik yaratır; güvenli onarım mümkün değil.
-  // Bu durumda doğrulayıcı reddetmeli, pipeline şema hatasıyla yeniden denemeli.
   const raw = '{"case_summary": "ateşli hasta, "clinical_pattern": "ataklı seyir"';
   assert.strictEqual(extractJson(raw), null);
   assert.throws(() => parseAndValidateAiOutput(raw), (err) => err.code === 'AI_INVALID_JSON');
@@ -100,7 +89,6 @@ check('JSON içermeyen metin -> null', () => {
   assert.strictEqual(extractJson('Üzgünüm, isteğinizi anlayamadım.'), null);
 });
 
-// ------------------------------------------------------------------
 console.log('\n[3] İki katmanlı şema doğrulaması');
 const VALID_OUTPUT = JSON.stringify({
   case_summary: '21 yaş kadın; tekrarlayan ateş, döküntü, eklem ağrısı',
@@ -186,7 +174,6 @@ check('retry mesajı hata yoksa ekstra bölüm içermez', () => {
   assert.strictEqual(buildRetryInstruction().includes('SCHEMA VALIDATION ERRORS'), false);
 });
 
-// ------------------------------------------------------------------
 console.log('\n[3b] Yapılandırılmış gerekçe özeti (reasoning)');
 const REASONING_OUTPUT = JSON.stringify({
   case_summary: '6 yaş erkek; tekrarlayan ateş atakları, karın ağrısı',
@@ -251,13 +238,11 @@ check('reasoning dolu çıktı tam şemadan geçer', () => {
   assert.strictEqual(r.valid, true, JSON.stringify(summarizeSchemaErrors(r.errors)));
 });
 
-// ------------------------------------------------------------------
 console.log('\n[4] /api/schema uç noktası');
 check('rota modülü yükleniyor', () => {
   const router = require(path.join(PROJECT, 'server/routes/api'));
   assert.ok(router && typeof router === 'function');
 });
 
-// ------------------------------------------------------------------
 console.log(`\nSonuç: ${passed} başarılı, ${failed} başarısız`);
 process.exit(failed > 0 ? 1 : 0);

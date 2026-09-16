@@ -1,6 +1,3 @@
-// "Geçmiş Vakalar" görünümü: vaka geçmişi (Case #001, v1..vN), bağımsız
-// eski analizler ve kaydedilmiş taslaklar.
-// Tüm veriler yalnızca tarayıcı yerel deposundan okunur; sunucuya hiçbir şey gönderilmez.
 import {
   getAnalyses, deleteAnalysis,
   getDrafts, deleteDraft,
@@ -8,7 +5,6 @@ import {
 } from './store.js';
 import { esc, formatDateTime, sexLabel } from './utils.js';
 
-/** Case #1 -> "Case #001" */
 function caseIdLabel(caseNumber) {
   return `Case #${String(caseNumber || 0).padStart(3, '0')}`;
 }
@@ -19,7 +15,6 @@ function relevanceChip(dx) {
   return `<span class="rel-chip rel-${esc(rel)}">${esc(map[rel] || rel)}</span>`;
 }
 
-// Bir vakanın en güncel DDx listesini tek satırlık özet olarak döndürür.
 function ddxSummary(analysis, max = 3) {
   const dxs = analysis.result?.differential_diagnoses || [];
   return dxs.slice(0, max)
@@ -71,7 +66,6 @@ function caseCard(c) {
     </div>`;
 }
 
-// Eski (vaka sisteminden önce) bağımsız analizler: caseId yok.
 function analysisRow(a) {
   const p = a.case?.patient || {};
   const symptomCount = (a.case?.symptoms || []).length;
@@ -162,7 +156,6 @@ export function renderHistory(appEl) {
       </div>
     </section>`;
 
-  // "＋ Yeni Bilgi": son sürümün form verisini saklayıp vN+1 formunu açar.
   appEl.querySelectorAll('[data-action="add-info"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
@@ -172,13 +165,11 @@ export function renderHistory(appEl) {
         sessionStorage.setItem('ci.formData', JSON.stringify(analysis.payload || {}));
         sessionStorage.setItem('ci.reanalyzeFrom', analysis.id);
       } catch {
-        /* depolama dolu olabilir; yine de forma gidilir */
       }
       window.location.hash = '#/new-case';
     });
   });
 
-  // Vakayı sil: vaka kaydı + tüm sürümleri.
   appEl.querySelectorAll('[data-action="delete-case"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const card = btn.closest('[data-case]');

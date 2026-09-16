@@ -1,5 +1,3 @@
-// "Yeni Vaka" görünümü: vaka formu, doğrulama, taslak kaydetme,
-// AI analizi başlatma ve sonuç ekranına yönlendirme.
 import { analyzeCase } from './api.js';
 import {
   saveAnalysis, saveDraft, deleteDraft,
@@ -8,12 +6,10 @@ import {
 import { esc, uid } from './utils.js';
 import { nextSyntheticCase } from './syntheticCases.mjs';
 
-/** Case #1 -> "Case #001" */
 function caseLabel(caseNumber) {
   return `Case #${String(caseNumber || 0).padStart(3, '0')}`;
 }
 
-// Yaygın semptom çipleri (liste sınırlayıcı değildir; "Diğer semptomlar" serbest alanı vardır).
 const SYMPTOMS = [
   { key: 'recurrent_fever', label: 'Tekrarlayan ateş' },
   { key: 'abdominal_pain', label: 'Karın ağrısı' },
@@ -48,8 +44,6 @@ function emptyPayload() {
 }
 
 export function renderNewCase(appEl, options = {}) {
-  // Yeniden analiz akışı: sonuç ekranından gelen veri ve önceki analiz kimliği.
-  // Kaynak analiz bir vakaya (caseId) aitse form "yeni bilgi ekle" (vN+1) modunda açılır.
   const reanalyzeFromId = options.reanalyzeFromId || null;
   const data = options.data || emptyPayload();
 
@@ -68,7 +62,6 @@ export function renderNewCase(appEl, options = {}) {
     }
   }
 
-  // Önceki görünümden kalma açık onay penceresi varsa temizle
   document.querySelector('.modal-overlay')?.remove();
 
   appEl.innerHTML = `
@@ -102,7 +95,6 @@ export function renderNewCase(appEl, options = {}) {
   const draftId = options.draftId || null;
   let analyzing = false;
 
-  // Yeni bilgi ekleme modunda taslak silme butonu da görünmez.
   const clearBtn0 = formEl.querySelector('#clear-draft-btn');
   if (clearBtn0 && caseCtx) clearBtn0.hidden = true;
 
@@ -120,7 +112,6 @@ export function renderNewCase(appEl, options = {}) {
     try {
       const response = await analyzeCase(payload);
 
-      // Case history: mevcut vakaya yeni sürüm olarak ekle ya da yeni vaka aç.
       let caseInfo;
       if (caseCtx) {
         caseInfo = {
@@ -181,8 +172,6 @@ export function renderNewCase(appEl, options = {}) {
       return;
     }
 
-    // Boş bırakılan isteğe bağlı alanlar: kullanıcıya göster ve onay iste.
-    // Onaylanınca alanlar backend'de "bilinmiyor" olarak işaretlenir.
     const emptyLabels = collectEmptyFieldLabels(payload);
     if (emptyLabels.length) {
       showConfirmModal(emptyLabels, () => runAnalysis(payload));
@@ -214,9 +203,7 @@ export function renderNewCase(appEl, options = {}) {
   }
 }
 
-/* ---------------- Boş alan onayı ---------------- */
 
-// İsteğe bağlı alanların kullanıcı dostu etiketleri: [bölüm, alan, etiket]
 const OPTIONAL_FIELD_LABELS = [
   ['symptomTiming', 'onset', 'Başlangıç zamanı'],
   ['symptomTiming', 'duration', 'Süre'],
@@ -238,7 +225,6 @@ const OPTIONAL_FIELD_LABELS = [
   ['geographicHistory', 'occupationalExposure', 'İş / meslek maruziyeti'],
 ];
 
-/** Formda boş bırakılmış isteğe bağlı alanların etiketlerini toplar. */
 function collectEmptyFieldLabels(payload) {
   const empty = [];
   for (const [section, key, label] of OPTIONAL_FIELD_LABELS) {
@@ -251,10 +237,6 @@ function collectEmptyFieldLabels(payload) {
   return empty;
 }
 
-/**
- * Boş bırakılan alanları listeleyen onay penceresi.
- * "Analiz Et" -> onConfirm çağrılır; "Forma Dön" / dış tıklama / Esc -> kapanır.
- */
 function showConfirmModal(emptyLabels, onConfirm) {
   document.querySelector('.modal-overlay')?.remove();
 
@@ -299,7 +281,6 @@ function showConfirmModal(emptyLabels, onConfirm) {
   document.body.appendChild(overlay);
 }
 
-/* ---------------- Bölümler ---------------- */
 
 function sectionPatient(data) {
   return `
@@ -483,7 +464,6 @@ function sectionGeographic(data) {
     </section>`;
 }
 
-/* ---------------- Yeni bilgi (sürüm) bölümü ---------------- */
 
 function sectionChangeNote(caseCtx) {
   return `
@@ -509,7 +489,6 @@ function textField(label, id, value, placeholder) {
     </div>`;
 }
 
-/* ---------------- Etkileşimler ---------------- */
 
 function setupChips(formEl, selected) {
   const selectedKeys = new Set((selected || []).map((s) => s.key));
@@ -532,7 +511,6 @@ function setupLabs(formEl, existing) {
     if (!btn) return;
     const row = btn.closest('.lab-row');
     if (container.querySelectorAll('.lab-row').length === 1) {
-      // Son satır silinemez; boşaltılır.
       row.querySelectorAll('input').forEach((input) => { input.value = ''; });
       row.querySelector('.lab-status').value = 'normal';
       return;
@@ -589,7 +567,6 @@ function setupEvents(formEl) {
   age.addEventListener('input', () => age.closest('[data-field="age"]').classList.remove('invalid'));
 }
 
-/* ---------------- Toplama ve doğrulama ---------------- */
 
 function collectPayload(formEl) {
   const value = (sel) => formEl.querySelector(sel)?.value?.trim() ?? '';
@@ -671,7 +648,6 @@ function showAlert(appEl, errors) {
   const messages = errors.map((e) => e.message);
   alertEl.innerHTML = `<div class="alert alert-error">${messages.map(esc).join('<br>')}</div>`;
 
-  // İlgili alanlara .invalid işaretini koy
   appEl.querySelectorAll('.field.invalid').forEach((el) => el.classList.remove('invalid'));
   errors.forEach((e) => {
     if (e.field === 'age') appEl.querySelector('[data-field="age"]')?.classList.add('invalid');

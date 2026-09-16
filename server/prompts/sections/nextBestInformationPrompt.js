@@ -1,8 +1,3 @@
-// PROMPT BÖLÜMÜ: next_best_information
-// ÜRÜNÜN ANA MOTORU: "Bir sonraki en değerli bilgi nedir?"
-// Tanı tahmini değil, bilgi seçimi: belirsizlik -> eksik bilgi -> ayırt edici
-// güç sıralaması -> net soru. İleride seçim information gain ile nicelendirilir;
-// modelden istenen yapı bu ölçümün nitel karşılığıdır (branch'li expected_outcome).
 module.exports = {
   id: 'next_best_information',
   title: 'NEXT BEST INFORMATION ENGINE',

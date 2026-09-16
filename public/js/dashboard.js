@@ -1,5 +1,3 @@
-// Dashboard görünümü: gerçek istatistikler ve son analizler.
-// Sahte veri üretilmez; yalnızca kullanıcının kendi kaydettiği analizler gösterilir.
 import { getStats, getAnalyses } from './store.js';
 import { esc, formatDateTime, sexLabel } from './utils.js';
 import { getMetrics } from './api.js';
@@ -8,8 +6,6 @@ export async function renderDashboard(appEl) {
   const stats = getStats();
   const analyses = getAnalyses().slice(0, 5);
 
-  // Tahmini API maliyeti sunucudan gelir; başarısız olursa kart sessizce gizlenir
-  // (dashboard'un geri kalanı bu veriye bağımlı değildir).
   let costHtml = '';
   try {
     const metrics = await getMetrics();

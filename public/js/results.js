@@ -1,17 +1,11 @@
-// "Analiz Sonucu" görünümü: vaka özeti, klinik örüntü, değerlendirilebilecek
-// olasılıklar (DDx kartları), eksik bilgiler, dikkat noktaları, kaynaklar,
-// yeniden analiz ve ?prev= karşılaştırma tablosu.
 import { getAnalysis, getCaseVersions, getAnalysisFeedback, saveAnalysisFeedback } from './store.js';
 import { whatIfAnalysis } from './api.js';
 import { esc, formatDateTime, sexLabel } from './utils.js';
 
-/** Case #1 -> "Case #001" */
 function caseIdLabel(caseNumber) {
   return `Case #${String(caseNumber || 0).padStart(3, '0')}`;
 }
 
-// Sürüm karşılaştırması: vN-1 ile vN arasındaki DDx değişimlerini hesaplar.
-// Dönüş: { changed: [{name, before, after}], added: [dx], removed: [{name, before}] }
 function computeDdxDelta(currentDx, previousDx) {
   const prevMap = new Map((previousDx || []).map((d) => [normalizeDxNameForDelta(d.name), d]));
   const currMap = new Map((currentDx || []).map((d) => [normalizeDxNameForDelta(d.name), d]));
@@ -40,21 +34,17 @@ function deltaArrow(before, after) {
   return '→';
 }
 
-/* ---------------- "Neler değişti?" (What changed?) ---------------- */
 
 function truncText(s, n = 90) {
   const t = String(s || '').replace(/\s+/g, ' ').trim();
   return t.length > n ? `${t.slice(0, n)}…` : t;
 }
 
-// İki sürümün form verisini karşılaştırır; yapılandırılmış "yeni bilgi" listesi üretir.
-// Dönüş: [{ kind: 'add'|'update'|'remove', text }]
 function computePayloadDelta(prevPayload, currPayload) {
   const prev = prevPayload || {};
   const curr = currPayload || {};
   const items = [];
 
-  // Semptom çipleri: yeni seçilenler +, kaldırılanlar −
   const keyOf = (s) => String(s.key || s.label || '').toLowerCase();
   const prevSym = new Set((prev.symptoms || []).map(keyOf));
   const currSym = new Set((curr.symptoms || []).map(keyOf));
@@ -65,7 +55,6 @@ function computePayloadDelta(prevPayload, currPayload) {
     if (!currSym.has(keyOf(s))) items.push({ kind: 'remove', text: s.label || s.key });
   }
 
-  // Laboratuvar sonuçları: yeni eklenen satırlar
   const labKey = (l) => [l.name, l.value, l.unit].map((x) => String(x || '').toLowerCase().trim()).join('|');
   const prevLabs = new Set((prev.laboratoryResults || []).filter((l) => l.name).map(labKey));
   const STATUS_TR = { high: 'yüksek', low: 'düşük', abnormal: 'anormal' };
@@ -76,12 +65,10 @@ function computePayloadDelta(prevPayload, currPayload) {
     items.push({ kind: 'add', text: `${l.name}${val ? `: ${val}` : ''}${st}` });
   }
 
-  // Diğer semptomlar
   const pOther = String(prev.otherSymptoms || '').trim();
   const cOther = String(curr.otherSymptoms || '').trim();
   if (cOther && cOther !== pOther) items.push({ kind: 'add', text: `Diğer semptomlar: ${truncText(cOther)}` });
 
-  // Klinik öykü: sona eklenen metni birebir göster
   const pNote = String(prev.clinicalNote || '').trim();
   const cNote = String(curr.clinicalNote || '').trim();
   if (cNote && cNote !== pNote) {
@@ -94,12 +81,10 @@ function computePayloadDelta(prevPayload, currPayload) {
     }
   }
 
-  // Atak düzeni / zamanlama
   if (JSON.stringify(prev.symptomTiming || {}) !== JSON.stringify(curr.symptomTiming || {})) {
     items.push({ kind: 'update', text: 'Atak düzeni / zamanlama bilgisi güncellendi' });
   }
 
-  // Tıbbi öykü ve coğrafi öykü alanları: yeni doldurulan alanlar +
   const FIELD_GROUPS = [
     ['medicalHistory', {
       previousIllnesses: 'Önceki hastalıklar',
@@ -128,7 +113,6 @@ function computePayloadDelta(prevPayload, currPayload) {
     }
   }
 
-  // Ön değerlendirme
   const pPrel = String(prev.preliminaryAssessment || '').trim();
   const cPrel = String(curr.preliminaryAssessment || '').trim();
   if (cPrel && cPrel !== pPrel) items.push({ kind: 'update', text: 'Doktorun ön değerlendirmesi güncellendi' });
@@ -136,7 +120,6 @@ function computePayloadDelta(prevPayload, currPayload) {
   return items;
 }
 
-// "YENİ BİLGİ" bölümü: doktor notu + form verisinden çıkarılan yapılandırılmış kalemler.
 function whatsChangedNewInfoHtml(changeNote, deltaItems) {
   const chips = deltaItems.map((it) => {
     if (it.kind === 'remove') return `<span class="wc-chip wc-remove">− ${esc(it.text)}</span>`;
@@ -152,7 +135,6 @@ function whatsChangedNewInfoHtml(changeNote, deltaItems) {
     </div>`;
 }
 
-// "ETKİSİ" bölümü: olasılıkların yön değişimi (↑ yükseldi, ↓ düştü, yeni/çıkarıldı).
 function whatsChangedEffectHtml(delta) {
   const chips = [
     ...delta.changed.map((c) => {
@@ -170,8 +152,6 @@ function whatsChangedEffectHtml(delta) {
     </div>`;
 }
 
-// vN-1 -> vN "Neler değişti?" kartı: doktor notu + yapılandırılmış yeni bilgi
-// + etki özeti (↑/↓) + önce/sonra karşılaştırma tablosu.
 function versionDiffBlock(current, prevVersion) {
   const delta = computeDdxDelta(
     current.result && current.result.differential_diagnoses,
@@ -223,16 +203,9 @@ function versionDiffBlock(current, prevVersion) {
     </div>`;
 }
 
-/* ---------------- What-if (karşı-olgusal) analiz ---------------- */
-// "Bu bulgu farklı olsaydı sonuç nasıl değişirdi?" motoru.
-// Kullanıcı formdan TEK bir alanı değiştirir; sunucu aynı pipeline'ı yeni
-// değerle yeniden çalıştırır. Bu ekranda ÖNCE (mevcut analiz) ile SONRA
-// (karşı-olgusal analiz) olasılık sıralaması yan yana gösterilir ve
-// "sıralamayı değiştiren yeni bilgi" yapılandırılmış olarak raporlanır.
 
 const WHATIF_ENUM_TR = { yes: 'Evet', no: 'Hayır', unknown: 'Bilinmiyor' };
 
-// Düzenlenebilir alanlar (backend beyaz listesiyle aynı sıra ve kapsam).
 const WHATIF_FIELDS = [
   { section: 'symptomTiming', field: 'resolution', label: 'Ataklar arasında tamamen düzelme', kind: 'enum' },
   { section: 'symptomTiming', field: 'episodic', label: 'Ataklar halinde mi?', kind: 'enum' },
@@ -267,7 +240,6 @@ function whatIfDisplayValue(f, v) {
 
 const WHATIF_REL_WEIGHT = { high: 3, moderate: 2, low: 1 };
 
-// Ham DDx listesini öncelik ağırlığına göre sıralar; her tanıya sıra numarası verir.
 function whatIfRankedList(dxList) {
   return (dxList || [])
     .map((d, i) => ({ d, i }))
@@ -291,14 +263,12 @@ function whatIfValueControlHtml(f, analysis) {
   if (f.kind === 'enum') {
     const cur = whatIfCurrentValue(analysis, f);
     const opts = ['yes', 'no', 'unknown'];
-        // Varsayılan: mevcut değerden FARKLI ilk seçenek (demo anında anlamlı değişim).
     const def = opts.find((o) => o !== cur) || 'unknown';
     return `<select id="wi-value">${opts.map((o) => `<option value="${o}" ${o === def ? 'selected' : ''}>${WHATIF_ENUM_TR[o]}</option>`).join('')}</select>`;
   }
   return `<input type="text" id="wi-value" maxlength="300" placeholder="${esc(f.placeholder || 'yeni değer')}">`;
 }
 
-// Karşı-olgusal sonucu render eder: sıralama banner'ı + ÖNCE/SONRA sütunları + tablo.
 function whatIfResultHtml(analysis, f, newValue, envelope) {
   const afterResult = (envelope && envelope.after && envelope.after.result) || {};
   const beforeRanked = whatIfRankedList((analysis.result && analysis.result.differential_diagnoses) || []);
@@ -311,7 +281,6 @@ function whatIfResultHtml(analysis, f, newValue, envelope) {
   const afterUncertainty = afterResult.uncertainty_assessment || {};
   const afterSafety = afterResult.clinical_safety || {};
 
-  // ---- "Sıralamayı değiştiren yeni bilgi" kalemleri ----
   const effectChips = [];
   const overtakes = [];
   for (const b of beforeRanked) {
@@ -333,7 +302,6 @@ function whatIfResultHtml(analysis, f, newValue, envelope) {
       effectChips.push(`<span class="wc-chip wc-add">+ ${esc(a.name)} <em>yeni gündeme geldi (${esc(RELEVANCE_SHORT[a.relevance] || a.relevance)})</em></span>`);
     }
   }
-  // Öne geçme tespiti: A, B'nin önündeydi; SONRA listesinde B'nin arkasına düştü.
   for (const b1 of beforeRanked) {
     for (const b2 of beforeRanked) {
       if (b1.norm === b2.norm) continue;
@@ -363,7 +331,6 @@ function whatIfResultHtml(analysis, f, newValue, envelope) {
         ? `<div class="wi-safety-warning"><strong>Güvenlik uyarısı:</strong> ${esc(afterSafety.label || 'Acil klinik değerlendirme önceliği')}</div>` : ''}
     </div>`;
 
-  // Birleşik satır kümesi: önce listedekiler, sonra yalnızca SONRA'da görünenler.
   const unionNorms = [];
   for (const r of beforeRanked) if (!unionNorms.includes(r.norm)) unionNorms.push(r.norm);
   for (const r of afterRanked) if (!unionNorms.includes(r.norm)) unionNorms.push(r.norm);
@@ -501,7 +468,6 @@ function setupWhatIf(appEl, analysis) {
   });
 }
 
-// Sürüm zaman çizelgesi: v1 -> vN çipleri; her biri ilgili analize gider.
 function versionTimelineBlock(analysis, versions) {
   if (!analysis.caseId || versions.length < 2) return '';
   const chips = versions.map((v) => {
@@ -533,8 +499,6 @@ function listBlock(title, items) {
     </div>`;
 }
 
-// Kanıt notları: [S1], [S2] gibi kaynak atıfları tıklanabilir çipe dönüşür.
-// Numaralar aşağıdaki Kaynaklar bölümündeki sırayla (S1 = ilk kaynak) eşleşir.
 function evidenceNotesBlock(notes) {
   if (!notes || notes.length === 0) return '';
   const lis = notes.map((note) => {
@@ -548,8 +512,6 @@ function evidenceNotesBlock(notes) {
     </div>`;
 }
 
-// Çelişki motoru: tanıyı zayıflatan bulgular + şiddet + sonuç cümlesi.
-// Modeli "en çok eşleşen hastalığı söyleyen bot" olmaktan çıkarır.
 function contradictionBlock(dx) {
   const against = dx.findings_against || [];
   const ca = dx.contradiction_assessment || {};
@@ -568,7 +530,6 @@ function contradictionBlock(dx) {
     </div>`;
 }
 
-// İkili karşılaştırma bloğu: bu adayın diğer aday tanılardan ayrıldığı noktalar.
 function comparisonBlock(items) {
   if (!items || items.length === 0) return '';
   const lis = items.map((c) => {
@@ -583,9 +544,6 @@ function comparisonBlock(items) {
     </div>`;
 }
 
-// "AI neden bunu yaptı?" paneli: modelin gizli düşünce zinciri gösterilmez;
-// sunucudan gelen üç yapılandırılmış liste görselleştirilir:
-//   DESTEKLEYEN (✓) / ALEYHİNE (⚠) / AYIRT EDİCİ (★)
 function reasoningPanel(dx) {
   const r = dx.reasoning || {};
   const supporting = Array.isArray(r.supporting_findings) ? r.supporting_findings : [];
@@ -627,22 +585,10 @@ function reasoningPanel(dx) {
     </div>`;
 }
 
-/* -------- "Sıralamayı en çok etkileyen bulgular" motoru -------- */
-// "Bu hastalık neden 1. sıraya çıktı?" sorusu yerine, sıralamayı EN ÇOK
-// etkileyen az sayıda bulgu gösterilir: ★ yukarı çeken (ayırt edici önce,
-// sonra destekleyen) ve ↓ aşağı çeken (zayıflatan) bulgular.
-// Veri kaynağı: reasoning.discriminative_findings (★, {finding, rationale}),
-// reasoning.supporting_findings (✓) ve reasoning.contradicting_findings (⚠).
-// Bu üç liste yoksa karttaki distinguishing_features / supporting_findings /
-// findings_against alanlarına düşülür (eski sürüm analizlerle uyumluluk).
 
 const RANK_DRIVERS_LIMIT_UP = 3;
 const RANK_DRIVERS_LIMIT_DOWN = 3;
 
-/**
- * Bir tanı için sıralamayı etkileyen bulguları öncelik sırasıyla toplar.
- * @returns {{ up: Array<{finding: string, rationale: string, star: boolean}>, down: string[] }}
- */
 function rankDriverFindings(dx) {
   const r = dx.reasoning || {};
   const up = [];
@@ -678,7 +624,6 @@ function rankDriverFindings(dx) {
   };
 }
 
-// Kartın en üstünde gösterilen kompakt "sıralama iticileri" bloğu.
 function rankDriversBlock(dx) {
   const { up, down } = rankDriverFindings(dx);
   if (!up.length && !down.length) return '';
@@ -701,9 +646,6 @@ function rankDriversBlock(dx) {
     </div>`;
 }
 
-// Sonuç ekranının merkezindeki karar gerekçesi özeti. Tanı adını öne
-// çıkarmak yerine, her adayın sıralamasını oluşturan denetlenebilir bulguları
-// ve mevcut belirsizliği ilk bakışta gösterir.
 function decisionRationaleView(result, diagnoses) {
   const uncertainty = String(result.uncertainty || '').trim();
   const assessment = result.uncertainty_assessment || {};
@@ -779,9 +721,6 @@ function decisionRationaleView(result, diagnoses) {
     </section>`;
 }
 
-// Olasılıklar sekmesi: kart başlıkta sade kalır (isim + öncelik rozeti);
-// tüm detay blokları karta tıklayınca açılır. AI gerekçesi ve kanıt notları
-// "Kanıtlar & Kaynaklar" sekmesinde gösterilir (tekrar yok).
 function ddxCard(dx) {
   const short = RELEVANCE_SHORT[dx.relevance] || 'Orta';
   const detail = [
@@ -873,18 +812,10 @@ function compareTable(current, previous) {
     </div>`;
 }
 
-// "Doktor vs AI" (iki yönlü çalışma): doktorun analizden ÖNCE girdiği sıralı
-// ön değerlendirme listesi ile AI'ın tamamen bağımsız sıralaması yan yana konur.
-// AI neden farklı düşündüğünü kendi gerekçeleriyle açıklar; karşılaştırma verisi
-// localStorage'da birikir ve zamanla doktor-AI fark istatistiklerine dönüşür.
 function normalizeDxName(s) {
   return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
 
-// ---------- Kanıt Ağacı ----------
-// Modelin gizli iç muhakemesi değil; girdideki kanıtlar (bulgular) ile aday tanılar
-// arasındaki açıklanabilir ilişkilerin yatay SVG ağaç görselleştirmesi.
-// Yeşil bağlantı = destekleyen kanıt, kırmızı bağlantı = zayıflatan kanıt.
 const ET_TYPE_LABELS = { symptom: 'Semptom', laboratory: 'Laboratuvar', history: 'Öykü', pattern: 'Seyir', other: 'Bulgu' };
 const ET_REL_LABELS = { high: 'Yüksek', moderate: 'Orta', low: 'Düşük' };
 const ET_TYPE_COLORS = {
@@ -934,7 +865,6 @@ function evidenceTreeView(result, diagnoses) {
 
   const relMap = new Map(diagnoses.map((d) => [normalizeDxName(d.name), d.relevance]));
 
-  // ---- yerleşim sabitleri ----
   const pad = 24;
   const rootW = 200;
   const fW = 226;
@@ -945,7 +875,6 @@ function evidenceTreeView(result, diagnoses) {
   const dxX = fX + fW + gap2;
   const W = dxX + dxW + pad;
 
-  // ---- bulgu kutu yükseklikleri (dinamik: rozet + label + detay) ----
   const fH = findings.map((f) => {
     const ll = wrapText(f.label, 30).length;
     const dl = f.detail ? wrapText(f.detail, 34).length : 0;
@@ -956,7 +885,6 @@ function evidenceTreeView(result, diagnoses) {
   findings.forEach((f, i) => { fY.push(acc); acc += fH[i] + 16; });
   const findingsH = acc - 16;
 
-  // ---- tanı kutu yükseklikleri (dinamik: başlık + sonuç + ipuçları) ----
   const dxConc = dxNodes.map((n) => wrapText(n.conclusion || '', 46));
   const dxH = dxNodes.map((n, i) => {
     const clueCount = Array.isArray(n.confirmatory_clues) ? n.confirmatory_clues.length : 0;
@@ -973,7 +901,6 @@ function evidenceTreeView(result, diagnoses) {
   const findingsTop = midY - findingsH / 2;
   const dxTop = midY - dxTotal / 2;
 
-  // ---- bağlantılar ----
   let paths = '';
   const fCy = findings.map((f, i) => findingsTop + fY[i] + fH[i] / 2);
   findings.forEach((f, i) => {
@@ -993,15 +920,12 @@ function evidenceTreeView(result, diagnoses) {
     paths += `<path d="M ${x1} ${y1} C ${x1 + gap2 / 2} ${y1}, ${x2 - gap2 / 2} ${y2}, ${x2} ${y2}" class="et-link et-link-${kind}" marker-end="url(#et-arrow-${kind})" />`;
   });
 
-  // ---- düğümler ----
-  // kök
   const rootLines = wrapText(tree.root_label || 'Vaka', 26).slice(0, 2);
   const rootTextY = rootY + (60 - rootLines.length * 15) / 2 + 13;
   let nodes = `<g><rect x="${pad}" y="${rootY}" width="${rootW}" height="60" rx="10" class="et-node-root" />`
     + svgTextLines(pad + rootW / 2, rootTextY, rootLines, 'et-label-root', 15, 'middle')
     + '</g>';
 
-  // bulgular
   findings.forEach((f, i) => {
     const x = fX;
     const y = findingsTop + fY[i];
@@ -1015,7 +939,6 @@ function evidenceTreeView(result, diagnoses) {
       + '</g>';
   });
 
-  // tanılar
   dxNodes.forEach((n, i) => {
     const x = dxX;
     const y = dxTop + dxY[i];
@@ -1082,7 +1005,6 @@ function doctorVsAIView(result, analysisCase) {
     : [];
   const maxRank = Math.max(doctorList.length, aiList.length);
 
-  // Normalize edilmiş isim -> ilk görüldüğü sıra (1 tabanlı)
   const normDoctor = new Map();
   doctorList.forEach((name, i) => {
     const k = normalizeDxName(name);
@@ -1175,9 +1097,6 @@ function doctorVsAIView(result, analysisCase) {
     </div>`;
 }
 
-// ---------- İkinci Görüş Motoru ----------
-// Ürünün ana değeri: doktorun ön değerlendirmesindeki hipotezleri kanıtlarla test eder,
-// düşünmediği ihtimalleri arar. Sonuç ekranında step numarasız HERO kart olarak sunulur.
 const SO_STATUS_META = {
   supported: { label: 'Destekleniyor', cls: 'so-status-supported' },
   challenged: { label: 'Sorgulanıyor', cls: 'so-status-challenged' },
@@ -1195,8 +1114,6 @@ function secondOpinionView(result, analysisCase) {
   const keyQuestion = String(so.key_question || '').trim();
   const hasSo = Boolean(summary || reviews.length || alts.length || keyQuestion);
 
-  // İkinci görüş üretilmemiş: doktor listesi boşsa özelliği tanıtan CTA, yoksa
-  // (özellik öncesi eski kayıtlar) yeniden analiz öneren bilgi kartı göster.
   if (!hasSo) {
     const intro = doctorList.length
       ? 'Bu analiz, ikinci görüş motoru etkinleştirilmeden önce üretilmiş olabilir. Vakayı yeniden analiz ederek doktor hipotezlerinizin kanıtlarla test edilmesini sağlayabilirsiniz.'
@@ -1272,8 +1189,6 @@ function missingView(result) {
     </div>`;
 }
 
-// "Eksik kritik bilgi" motoru: eksik bilgi -> etkilediği olasılıklar -> etki yönü.
-// Doktora "cevap" değil "bir sonraki en değerli soru" sunar.
 function missingImpactView(result) {
   const items = result.missing_information_impact || [];
   const priority = result.missing_information_priority || '';
@@ -1325,7 +1240,6 @@ const SOURCE_TYPE_LABELS = {
   textbook: 'Kitap',
 };
 
-// Yapılandırılmış kaynak kartı (kanıt katmanı) ya da eski düz metin kaynağı.
 function sourceItemHtml(s, index) {
   if (typeof s === 'string') {
     return `<li class="source-item"><span class="source-text">${esc(s)}</span></li>`;
@@ -1365,9 +1279,6 @@ function sourcesView(result) {
     </div>`;
 }
 
-// Kanıtlar & Kaynaklar sekmesi: her aday tanı için DESTEKLEYEN / ALEYHİNE /
-// AYIRT EDİCİ bulgular (reasoning paneli) ve kanıt notları. Olasılıklar
-// sekmesiyle bilgi tekrarı olmaması için bu paneller kartlardan buraya taşındı.
 function evidencePerDxView(result) {
   const dxs = Array.isArray(result.differential_diagnoses) ? result.differential_diagnoses : [];
   const blocks = dxs.map((dx) => {
@@ -1392,8 +1303,6 @@ function evidencePerDxView(result) {
     ${blocks}`;
 }
 
-// ÜRÜNÜN ANA BİLEŞENİ: "Bir sonraki en değerli bilgi nedir?" hero kartı.
-// Tanı beyanı değil, belirsizliği en çok azaltacak TEK bilgi + soru gösterilir.
 function nextBestInfoView(result) {
   const nbi = result.next_best_information;
   const top = nbi && nbi.top;
@@ -1648,7 +1557,6 @@ export function renderResults(appEl, options = {}) {
   const p = (analysis.case && analysis.case.patient) || {};
   const symptomCount = (analysis.case && analysis.case.symptoms && analysis.case.symptoms.length) || 0;
 
-  // Case history: bu analiz bir vakaya aitse sürümleri ve önceki sürümü çözümle.
   const versions = analysis.caseId ? getCaseVersions(analysis.caseId) : [];
   const prevVersion = (analysis.caseId && analysis.version > 1)
     ? versions.find((v) => v.version === analysis.version - 1 && v.id !== analysis.id) || null
@@ -1656,8 +1564,6 @@ export function renderResults(appEl, options = {}) {
   const isCase = Boolean(analysis.caseId);
   const nextVersion = versions.length + 1;
 
-  // ---- Sekme panelleri: içerik TEK SEFERDE üretilir; sekmeler yalnızca
-  // görünürlük değiştirir. URL değişmez, sayfa yenilenmez, API çağrısı yapılmaz.
   const overviewPanel = `
     <div class="tab-panel active" id="tab-overview" role="tabpanel" aria-label="Genel Bakış">
       ${prevVersion ? versionDiffBlock(analysis, prevVersion) : ''}
@@ -1776,7 +1682,6 @@ export function renderResults(appEl, options = {}) {
       </div>
     </div>`;
 
-  // Sekme geçişi: yalnızca CSS sınıfı değişir; hash/render/fetch yok.
   const tabs = appEl.querySelectorAll('.results-tab');
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
@@ -1791,7 +1696,6 @@ export function renderResults(appEl, options = {}) {
     });
   });
 
-  // Olasılık kartları: başlıkta kapalı, tıklayınca detay açılır.
   appEl.querySelectorAll('.ddx-toggle').forEach((btn) => {
     btn.addEventListener('click', () => {
       const card = btn.closest('.ddx-card');
@@ -1800,13 +1704,11 @@ export function renderResults(appEl, options = {}) {
     });
   });
 
-  // Yeniden analiz: form verisini ve önceki analiz kimliğini saklayıp forma gider.
   const startReanalyze = () => {
     try {
       sessionStorage.setItem('ci.formData', JSON.stringify(analysis.payload || {}));
       sessionStorage.setItem('ci.reanalyzeFrom', analysis.id);
     } catch {
-      /* depolama dolu olabilir; yine de forma gidilir */
     }
     window.location.hash = '#/new-case';
   };
@@ -1864,6 +1766,5 @@ export function renderResults(appEl, options = {}) {
     });
   });
 
-  // What-if (karşı-olgusal) paneli: bulgu seçimi + test çalıştırma.
   setupWhatIf(appEl, analysis);
 }

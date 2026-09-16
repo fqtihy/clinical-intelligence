@@ -1,10 +1,6 @@
-// Vaka girişini doğrular, temizler ve model katmanına gönderilecek yapılandırılmış JSON'a dönüştürür.
-// Frontend'den gelen Türkçe etiketler burada İngilizce semptom adlarıyla eşlenir
-// (AI prompt'u İngilizce şemayla beslenir, alan değerleri doktorun dilinde kalır).
 const { ApiError } = require('../middleware/errorHandler');
 const { assertNoPii } = require('./piiGuard');
 
-// Semptom çipi anahtarı -> modele gönderilecek İngilizce semptom adı
 const SYMPTOM_MAP = {
   recurrent_fever: 'recurrent fever',
   abdominal_pain: 'abdominal pain',
@@ -37,8 +33,6 @@ function asTrimmedString(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-// İsteğe bağlı öykü alanlarını doldurur: boş bırakılan her alan açıkça "bilinmiyor"
-// olarak işaretlenir; böylece AI bilgi eksikliğini "bilinmiyor" olarak görür.
 function fillUnknown(obj) {
   const out = {};
   for (const [key, value] of Object.entries(obj || {})) {
@@ -47,11 +41,6 @@ function fillUnknown(obj) {
   return out;
 }
 
-/**
- * Frontend'den gelen ham vaka verisini doğrular ve yapılandırılmış JSON'a çevirir.
- * @param {object} raw - Frontend'in gönderdiği ham veri
- * @returns {object} modele gönderilecek yapılandırılmış vaka nesnesi
- */
 function normalizeAndValidate(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     fail('INVALID_PAYLOAD', 'Geçersiz istek biçimi.');
@@ -61,7 +50,6 @@ function normalizeAndValidate(raw) {
   }
   assertNoPii(raw);
 
-  // ---- 1. Hasta temel bilgileri ----
   const patient = (raw.patient && typeof raw.patient === 'object') ? raw.patient : {};
   const ageRaw = patient.age;
   const age = ageRaw === '' || ageRaw === null || ageRaw === undefined ? null : Number(ageRaw);
@@ -73,7 +61,6 @@ function normalizeAndValidate(raw) {
     fail('VALIDATION_FAILED', 'Cinsiyet değeri geçersiz.', { field: 'patient.sex' });
   }
 
-  // ---- 2. Semptomlar ----
   const rawSymptoms = Array.isArray(raw.symptoms) ? raw.symptoms : [];
   const symptoms = [];
   for (const s of rawSymptoms) {
@@ -93,7 +80,6 @@ function normalizeAndValidate(raw) {
     symptoms.push({ name: `other (${otherSymptoms})` });
   }
 
-  // ---- 3. Klinik öykü ----
   const clinicalNote = asTrimmedString(raw.clinicalNote);
   if (clinicalNote.length > MAX_CLINICAL_NOTE_LENGTH) {
     fail('CLINICAL_NOTE_TOO_LONG', `Klinik öykü ${MAX_CLINICAL_NOTE_LENGTH} karakterden uzun olamaz.`, {
@@ -102,14 +88,12 @@ function normalizeAndValidate(raw) {
     });
   }
 
-  // Kritik alan kontrolü: en az bir semptom veya klinik öykü olmalı
   if (symptoms.length === 0 && !clinicalNote) {
     fail('VALIDATION_FAILED', 'Analiz için en az bir semptom seçmeli veya klinik öykü yazmalısınız.', {
       field: 'symptoms',
     });
   }
 
-  // ---- 4. Laboratuvar sonuçları ----
   const rawLabs = Array.isArray(raw.laboratoryResults) ? raw.laboratoryResults : [];
   if (rawLabs.length > MAX_LAB_ROWS) {
     fail('VALIDATION_FAILED', `En fazla ${MAX_LAB_ROWS} laboratuvar sonucu ekleyebilirsiniz.`, { field: 'laboratoryResults' });
@@ -134,24 +118,18 @@ function normalizeAndValidate(raw) {
     laboratoryResults.push(item);
   }
 
-  // ---- 5. Semptom zamanlaması (boş alanlar "bilinmiyor" olarak işaretlenir) ----
   const symptomTiming = fillUnknown(raw.symptomTiming);
 
-  // ---- 6. Tıbbi öykü (boş alanlar "bilinmiyor" olarak işaretlenir) ----
   const medicalHistory = fillUnknown(raw.medicalHistory);
 
-  // ---- 7. Coğrafi / yaşam öyküsü (boş alanlar "bilinmiyor" olarak işaretlenir) ----
   const geographicHistory = fillUnknown(raw.geographicHistory);
 
-  // ---- 8. Doktorun ön değerlendirmesi: öncelik sırasına göre sıralı tanı listesi ----
-  // Satır satır girilir; "1. SLE" gibi numara önekleri temizlenir. Boşsa [] kalır.
   const doctorPreliminary = asTrimmedString(raw.preliminaryAssessment)
     .split(/\r?\n/)
     .map((line) => line.replace(/^\s*\d+[.)\-]?\s*/, '').trim())
     .filter(Boolean)
     .slice(0, 10);
 
-  // ---- 9. Yapılandırılmış çıktı ----
   return {
     patient: { age, sex },
     symptoms,

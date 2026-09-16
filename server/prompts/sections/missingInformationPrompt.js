@@ -1,5 +1,3 @@
-// PROMPT BÖLÜMÜ: missing_information_prompt
-// Eksik kritik bilgi motoru: kesin yanıt değil, "bir sonraki en değerli soru" üretilir.
 module.exports = {
   id: 'missing_information',
   title: 'MISSING INFORMATION ENGINE',

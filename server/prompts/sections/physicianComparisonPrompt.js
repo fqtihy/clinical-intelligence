@@ -1,7 +1,3 @@
-// PROMPT BÖLÜMÜ: physician_comparison_prompt
-// Doktor ikili çalışma: doktorun ön değerlendirmesiyle bağımsız karşılaştırma.
-// v2.0'dan itibaren ikinci görüş motoru ayrı bir bölüme (second_opinion_prompt) taşındı;
-// bu bölüm yalnızca doctor_divergence_analysis üretimini tanımlar.
 module.exports = {
   id: 'physician_comparison',
   title: 'PHYSICIAN COMPARISON',

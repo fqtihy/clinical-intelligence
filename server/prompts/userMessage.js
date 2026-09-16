@@ -1,11 +1,3 @@
-// PROMPT MODÜLÜ: kullanıcı mesajı üretici.
-// Doktorun verileri düz metin yerine yapılandırılmış JSON olarak iletilir;
-// kanıt demeti ayrı mesaj DEĞİL, aynı mesajın içine EVIDENCE CONTEXT olarak gömülür
-// (retry testi messages.length === 2 bekler: system + user).
-/**
- * @param {object} structuredCase - caseNormalizer tarafından üretilen yapılandırılmış vaka
- * @param {object} [evidenceContext] - evidenceService.buildEvidenceContext çıktısı ({ context: {...} })
- */
 function buildUserMessage(structuredCase, evidenceContext) {
   const parts = [
     'Analyze the following structured clinical case supplied by a physician.',

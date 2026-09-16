@@ -1,6 +1,3 @@
-// "Ayarlar" görünümü: sunucu/AI bağlantı durumu, yerel veri yönetimi ve uygulama bilgisi.
-// Sağlayıcı adı SABİT KODLANMAZ: /api/health'den provider-bağımsız gelir
-// (MODEL_PROVIDER .env ile değişebilir; frontend hangi model kullanıldığını bilmez).
 import { getHealth } from './api.js';
 import { getAnalyses, getDrafts, clearAllLocalData, getRetentionDays } from './store.js';
 import { esc, formatDateTime } from './utils.js';
@@ -87,7 +84,6 @@ export function renderSettings(appEl) {
 
   const root = appEl.querySelector('#settings-root');
 
-  // Bağlantı testi — ilk yüklemede otomatik, butonla yeniden.
   const runHealthCheck = async () => {
     let health = null;
     try {
@@ -96,12 +92,10 @@ export function renderSettings(appEl) {
       root.querySelector('section').outerHTML = healthCard(appEl, null, false, err.message);
       return;
     }
-    // Sağlayıcı adı health yanıtından alındığı için "Hakkında" kartı da tazelenir.
     root.querySelector('section').outerHTML = healthCard(appEl, health, false, null);
     root.querySelectorAll('section')[1].outerHTML = aboutCard(health);
   };
 
-  // Buton innerHTML ile yeniden çizildiğinde dinleyici kopmasın diye delegasyon kullanılır.
   root.addEventListener('click', (ev) => {
     if (!ev.target.closest('#health-btn')) return;
     const btn = root.querySelector('#health-btn');

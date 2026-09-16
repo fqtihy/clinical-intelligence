@@ -1,5 +1,3 @@
-// PROMPT BÖLÜMÜ: evidence_tree_prompt
-// Kanıt ağacı: girdideki kanıtlar ile aday tanılar arasındaki açıklanabilir ilişkiler.
 module.exports = {
   id: 'evidence_tree',
   title: 'EVIDENCE TREE',

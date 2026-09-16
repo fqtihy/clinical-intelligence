@@ -1,10 +1,3 @@
-// KATMAN 5: Klinik akıl yürütme pipeline'ı (orkestratör).
-// Akış: case processor -> knowledge retrieval -> prompt kurulumu -> model soyutlaması ->
-//        yanıt doğrulayıcı -> result formatter.
-// Model çağrısı services/model soyutlaması üzerinden yapılır; hangi sağlayıcının
-// (DeepSeek, OpenAI, mock...) kullanıldığı pipeline için önemsizdir.
-// Model yanıtı token sınırına takılıp kesilirse veya geçersiz JSON dönerse,
-// model bir kez daha (kısa çıktı yönergesiyle) çağrılarak kendini düzeltmesi sağlanır.
 const crypto = require('crypto');
 const logger = require('../logger');
 const config = require('../config');
@@ -21,20 +14,11 @@ const { buildClinicalSafetyAssessment } = require('./clinicalSafetyEngine');
 const { formatAnalysisResult } = require('./resultFormatter');
 const modelClient = require('../services/model');
 
-// En fazla kaç deneme yapılacağı (ilk istek + 1 kendini düzeltme hakkı)
 const MAX_ATTEMPTS = 2;
 
-/**
- * Bir vakanın tam analiz akışını çalıştırır.
- * İlk yanıt geçersizse veya kesildiyse, kısa çıktı yönergesiyle bir kez daha dener.
- * @param {object} rawCase - Frontend'den gelen ham vaka verisi
- */
 async function analyzeCase(rawCase) {
-  // 1) Vaka yapılandırma
   const structuredCase = processCase(rawCase);
 
-  // Kanıt katmanı: aday üretimi + kanıt çıkarımı + çelişki tespiti.
-  // Deterministik ve çevrimdışı çalışır; model yalnızca bu demet üzerinde akıl yürütür.
   const evidenceContext = retrieveKnowledge(structuredCase);
   logger.info('analysis', 'kanıt katmanı adayları', {
     candidates: evidenceContext.candidates.map((c) => ({
@@ -45,11 +29,8 @@ async function analyzeCase(rawCase) {
     sourceCount: evidenceContext.sources.length,
   });
 
-  // Prompt sürümü bilgisi: sunucu başlangıcında bir kez çözümlenir, sonucu sarar.
   const promptInfo = prompts.getPromptInfo();
 
-  // Metrik korelasyon kimliği: bir isteğe ait tüm AI çağrıları (ilk deneme + onarım)
-  // bu kimlikle loglanır. Vaka içeriğiyle ilgisizdir (PII-free).
   const requestId = crypto.randomUUID();
   const schemaInfo = { schema_version: require('../schemas/analysisSchema').SCHEMA_VERSION };
 
@@ -59,8 +40,6 @@ async function analyzeCase(rawCase) {
   ];
 
   let lastError = null;
-  // Önceki denemenin şema doğrulama hataları: yeniden denemede modele
-  // "neyi düzelteceği" açıkça bildirilir (kör retry yerine hedefli onarım).
   let lastValidationErrors = [];
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const messages = attempt === 1
@@ -69,8 +48,6 @@ async function analyzeCase(rawCase) {
 
     let completion;
     try {
-      // Yeniden denemede daha belirleyici çıktı için sıcaklık düşürülür.
-      // Metrik bağlamı (request_id, deneme no, prompt/şema sürümü) her çağrıyla taşınır.
       completion = await modelClient.createChatCompletion({
         messages,
         temperature: attempt === 1 ? undefined : 0.1,
@@ -80,7 +57,6 @@ async function analyzeCase(rawCase) {
         schemaVersion: schemaInfo.schema_version,
       });
     } catch (err) {
-      // API/ağ hatası: yeniden denemek yerine doğrudan kullanıcıya güvenli hata döndür.
       throw err;
     }
 
@@ -92,18 +68,12 @@ async function analyzeCase(rawCase) {
         evidenceContext.sources,
       );
 
-      // JSON geçerli ama model token sınırına takılıp kesilmişse sonuç güvenilmezdir.
-      // (Sağlam JSON çıkarımı yalnızca ilk '{'...son '}' bölgesini aldığı için
-      //  yarıda kesilmiş bir nesne genellikle zaten ayrıştırılamaz; yine de kontrol edilir.)
       if (completion.finishReason === 'length') {
         logger.warn('pipeline', 'yanıt token sınırında kesildi, yeniden deneniyor', { requestId, attempt });
         lastError = new ApiError(502, 'AI_INVALID_JSON', 'Analiz şu anda gerçekleştirilemedi. Lütfen tekrar deneyin.');
         continue;
       }
 
-      // KATMAN 3.5: İddia denetimi. Model çıktısı şemaya uysa bile iddiaları
-      // gerçek vaka verisi ve kanıt katmanına karşı denetlenir; şüpheli iddialar
-      // kullanıcıya audit_flags ile bildirilir (sonuç silinmez, işaretlenir).
       result.audit_flags = auditClaims(result, structuredCase, evidenceContext);
       result.uncertainty_assessment = buildUncertaintyAssessment(
         result,
@@ -113,7 +83,6 @@ async function analyzeCase(rawCase) {
       );
       result.clinical_safety = buildClinicalSafetyAssessment(structuredCase, result.audit_flags);
 
-      // Metrik: istek, ilk denemede mi onaylandı, onarım denemesiyle mi?
       metrics.recordParseResult({
         request_id: requestId,
         attempts: attempt,
@@ -150,7 +119,6 @@ async function analyzeCase(rawCase) {
     }
   }
 
-  // Tüm denemeler tükendi: istek parse edilemedi. Metrik kaydı + hatayı yukarı fırlat.
   metrics.recordParseResult({
     request_id: requestId,
     attempts: MAX_ATTEMPTS,
@@ -164,18 +132,7 @@ async function analyzeCase(rawCase) {
   throw lastError;
 }
 
-/* ------------------------------------------------------------------ */
-// WHAT-IF (KARŞI-OLGUSAL) ANALİZ
-// "Bu bulgu farklı olsaydı sonuç nasıl değişirdi?" sorusunun motoru.
-// Kullanıcının mevcut vaka verisi üzerinden TEK bir form alanı bilinçli
-// olarak değiştirilir ve aynı pipeline (processCase -> knowledge -> model ->
-// validation -> formatter) baştan sona yeniden çalıştırılır. Modelin yeni
-// bilgiye göre hipotezlerini güncelleyip güncellemediği böylece gözlemlenebilir.
-// Sonuç geçmişe kaydedilmez; yalnızca karşılaştırma amacıyla döner.
 
-// Karşı-olgusal düzenlemeye izin verilen bölümler ve alanlar (beyaz liste).
-// Beyaz liste dışındaki her şey 422 ile reddedilir; model prompt'u asla
-// serbest metinle değiştirilemez.
 const WHATIF_EDITABLE = {
   symptomTiming: new Set(['onset', 'duration', 'recurrent', 'episodic', 'episodeDuration', 'resolution']),
   medicalHistory: new Set(['previousIllnesses', 'medications', 'familyHistory', 'previousDiagnoses', 'previousTreatments', 'treatmentResponse']),
@@ -183,7 +140,6 @@ const WHATIF_EDITABLE = {
   otherSymptoms: new Set(['value']),
 };
 
-// Formda select ile girilen alanların izinli değerleri (frontend select'leriyle aynı).
 const WHATIF_ENUMS = {
   'symptomTiming.recurrent': ['yes', 'no', 'unknown'],
   'symptomTiming.episodic': ['yes', 'no', 'unknown'],
@@ -192,11 +148,6 @@ const WHATIF_ENUMS = {
 
 const WHATIF_MAX_VALUE_LENGTH = 300;
 
-/**
- * Gelen düzenleme isteğini doğrular ve normalize eder.
- * @param {object} edit - { section, field, value }
- * @returns {{ section: string, field: string, value: string }}
- */
 function normalizeWhatIfEdit(edit) {
   if (!edit || typeof edit !== 'object' || Array.isArray(edit)) {
     throw new ApiError(422, 'INVALID_WHATIF_EDIT', 'Karşı-olgusal düzenleme (edit) eksik veya geçersiz.');
@@ -218,7 +169,6 @@ function normalizeWhatIfEdit(edit) {
   return { section, field, value };
 }
 
-/** Düzenlemeyi vakanın sığ kopyasına uygular; orijinal nesne değişmez. */
 function applyWhatIfEdit(rawCase, edit) {
   const clone = { ...rawCase };
   if (edit.section === 'otherSymptoms') {
@@ -229,12 +179,6 @@ function applyWhatIfEdit(rawCase, edit) {
   return clone;
 }
 
-/**
- * Karşı-olgusal analiz: düzenlenmiş vakanın tam analizini çalıştırır.
- * @param {object} rawCase - Frontend'de saklanmış ham vaka verisi (analysis.payload)
- * @param {object} edit - { section, field, value }
- * @returns {Promise<{ edit: object, after: object }>} after = formatAnalysisResult zarfı
- */
 async function whatIfAnalysis(rawCase, edit) {
   const normalizedEdit = normalizeWhatIfEdit(edit);
   const baseCase = rawCase && typeof rawCase === 'object' && !Array.isArray(rawCase) ? rawCase : {};

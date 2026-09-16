@@ -1,6 +1,3 @@
-// Belirsizlik motoru: modelin "uncertainty" metnine güvenmek yerine,
-// vaka verisi + deterministik kanıt katmanı + audit sonuçlarından karar güvenini
-// bağımsız ve açıklanabilir biçimde hesaplar.
 
 function asText(value) {
   return typeof value === 'string' ? value.trim() : '';

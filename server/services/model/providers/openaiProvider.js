@@ -1,5 +1,3 @@
-// OpenAI provider kaydı: DeepSeek yerine OpenAI-uyumlu herhangi bir modele geçiş
-// örneği. MODEL_PROVIDER=openai ile etkinleşir; kod değişikliği gerektirmez.
 const config = require('../../../config');
 const { createOpenAICompatibleClient } = require('./openaiCompatible');
 

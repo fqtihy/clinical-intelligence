@@ -1,5 +1,3 @@
-// Klinik güvenlik katmanı: tanı koymaz; kritik olabilecek sinyalleri
-// deterministik olarak görünür kılar ve AI çıktısından bağımsız uyarı üretir.
 
 const RED_FLAGS = [
   {

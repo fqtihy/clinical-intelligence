@@ -1,6 +1,3 @@
-// Basit yapılandırılabilir JSON logger.
-// Geliştirici tarafında detaylı log tutmak için tasarlandı; ileride dosyaya veya
-// merkezi log sistemine yönlendirmek kolaydır (LOG_LEVEL ortam değişkeni ile ayarlanır).
 const LEVELS = { debug: 10, info: 20, warn: 30, error: 40 };
 const configuredLevel = (process.env.LOG_LEVEL || 'info').toLowerCase();
 

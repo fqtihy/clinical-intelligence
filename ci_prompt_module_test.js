@@ -1,9 +1,3 @@
-// Prompt engineering modülü testi:
-// 1) Bölüm modülleri: id, başlık, boş olmayan metin
-// 2) Sürüm kayıt defteri: v1.0 / v1.1 / v2.0 kompozisyonları
-// 3) Birleştirme + içerik karması (aynı sürüm = aynı hash, farklı sürüm = farklı hash)
-// 4) Result formatter: prompt_version / prompt / model / provider metadatası
-// 5) API uç noktaları: /api/prompt-versions, /api/prompt/:version
 const path = require('path');
 const assert = require('assert');
 
@@ -16,7 +10,6 @@ function check(name, fn) {
   try {
     const out = fn();
     if (out && typeof out.then === 'function') {
-      // Async testler: promise beklenir ve reddi sayılır; aksi halde hatalar yutulur.
       const tracked = out.then(
         () => { passed++; console.log(`  OK  ${name}`); },
         (err) => { failed++; console.error(`FAIL  ${name}\n      ${err.message}`); },
@@ -36,7 +29,6 @@ function check(name, fn) {
 const prompts = require(path.join(PROJECT, 'server/prompts'));
 const { formatAnalysisResult } = require(path.join(PROJECT, 'server/pipeline/resultFormatter'));
 
-// ------------------------------------------------------------------
 console.log('\n[1] Bölüm modülleri');
 const EXPECTED_SECTIONS = [
   'system',
@@ -58,7 +50,6 @@ check('index.js bölüm listesi tutarlı ve içerik üretiyor', () => {
   assert.ok(prompts.SECTION_IDS.length === 11);
   const ids = new Set(prompts.SECTION_IDS);
   assert.strictEqual(ids.size, 11, 'bölüm id tekrarı');
-  // aktif sürümün metni birleştirilebilir olmalı
   const activeText = prompts.buildSystemPrompt();
   assert.ok(activeText.length > 1000, 'aktif sürüm metni çok kısa');
   assert.ok(prompts.SECTION_IDS.includes('second_opinion'));
@@ -98,7 +89,6 @@ check('kullanıcı mesajı ve retry mesajı üretimi çalışıyor', () => {
   assert.ok(retry.includes('SCHEMA VALIDATION ERRORS'));
 });
 
-// ------------------------------------------------------------------
 console.log('\n[2] Sürüm kayıt defteri');
 check('v1.0, v1.1, v2.0, v3.0 kayıtlı; varsayılan en güncül stable', () => {
   const list = prompts.listPromptVersions();
@@ -132,7 +122,6 @@ check('v3.0 structured_reasoning bölümünü contradiction sonrası alır', () 
   assert.strictEqual(idxReasoning, idxContra + 1, 'structured_reasoning contradiction sonrası gelmeli');
 });
 
-// ------------------------------------------------------------------
 console.log('\n[3] Birleştirme ve içerik karması');
 check('her sürüm birleştirilebilir; farklı sürümler farklı metinler', () => {
   const texts = {
@@ -144,15 +133,12 @@ check('her sürüm birleştirilebilir; farklı sürümler farklı metinler', () 
   assert.notStrictEqual(texts['1.0'], texts['1.1']);
   assert.notStrictEqual(texts['1.1'], texts['2.0']);
   assert.notStrictEqual(texts['2.0'], texts['3.0']);
-  // v3.0 yapılandırılmış gerekçe özeti bölümünü içerir
   assert.ok(texts['3.0'].includes('YAPILANDIRILMIŞ GEREKÇE ÖZETİ'));
   assert.ok(texts['3.0'].includes('reasoning.supporting_findings'));
   assert.ok(texts['3.0'].includes('reasoning.discriminative_findings'));
   assert.ok(!texts['2.0'].includes('YAPILANDIRILMIŞ GEREKÇE ÖZETİ'));
-  // v1.1 = v1.0 + json_discipline
   assert.ok(texts['1.1'].includes('JSON OUTPUT DISCIPLINE'));
   assert.ok(!texts['1.0'].includes('JSON OUTPUT DISCIPLINE'));
-  // v2.0 hem disiplini hem ayrı ikinci görüş bölümünü içerir
   assert.ok(texts['2.0'].includes('JSON OUTPUT DISCIPLINE'));
   assert.ok(texts['2.0'].includes('İKİNCİ GÖRÜŞ MOTORU'));
   assert.ok(texts['2.0'].includes('Your answer must be valid JSON matching exactly this schema'));
@@ -182,7 +168,6 @@ check('aktif buildSystemPrompt() = sürümlü çağrıyla aynı metin', () => {
   assert.strictEqual(prompts.buildSystemPrompt(), prompts.buildSystemPrompt(prompts.DEFAULT_VERSION));
 });
 
-// ------------------------------------------------------------------
 console.log('\n[4] Result formatter metadatası');
 check('prompt_version + prompt + model/provider sonuç zarfına eklenir', () => {
   const out = formatAnalysisResult(
@@ -207,7 +192,6 @@ check('promptInfo verilmezse zarf yine de üretilir (null alanlar)', () => {
   assert.strictEqual(out.model, 'm');
 });
 
-// ------------------------------------------------------------------
 console.log('\n[5] API uç noktaları (canlı express)');
 async function httpTest() {
   const express = require(path.join(PROJECT, 'node_modules/express'));

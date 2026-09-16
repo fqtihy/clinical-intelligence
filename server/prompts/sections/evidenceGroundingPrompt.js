@@ -1,6 +1,3 @@
-// PROMPT BÖLÜMÜ: evidence_grounding_prompt
-// En kritik kural: model bir tıbbi bilgi deposu değildir; yalnızca EVIDENCE CONTEXT
-// demeti üzerinden akıl yürütür. Atıf kuralları ve dil kuralı da bu bölümde.
 module.exports = {
   id: 'evidence_grounding',
   title: 'EVIDENCE GROUNDING',

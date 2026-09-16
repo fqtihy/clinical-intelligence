@@ -1,5 +1,3 @@
-// REST API rotaları.
-// Frontend yalnızca bu uç noktalarla konuşur; model çağrıları tamamen sunucu tarafındadır.
 const express = require('express');
 const logger = require('../logger');
 const { analyzeCase, whatIfAnalysis } = require('../pipeline/analyzePipeline');
@@ -11,7 +9,6 @@ const costTracker = require('../observability/costTracker');
 
 const router = express.Router();
 
-// Sağlık kontrolü: sunucu ayakta mı, aktif model sağlayıcısı yapılandırılmış mı?
 router.get('/health', (req, res) => {
   const { provider, model } = getModelInfo();
   res.json({
@@ -24,15 +21,10 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Structured Output sözleşmesi: AI yanıtının uymak zorunda olduğu JSON şeması.
-// Frontend ve testler beklenen alan/tip/enum tanımlarını buradan okuyabilir;
-// her başarılı /analyze yanıtı ayrıca structured_output.schema_version taşır.
 router.get('/schema', (req, res) => {
   res.json({ ok: true, schema_version: SCHEMA_VERSION, schema: ANALYSIS_SCHEMA });
 });
 
-// Prompt sürümlerinin listesi: sürümler arası kalite karşılaştırmasının temeli.
-// Hangi sürümler var, hangi bölümlerden oluşuyorlar, hangisi aktif?
 router.get('/prompt-versions', (req, res) => {
   const active = prompts.getPromptInfo();
   res.json({
@@ -42,12 +34,8 @@ router.get('/prompt-versions', (req, res) => {
   });
 });
 
-// Belirli bir sürümün birleştirilmiş prompt metni + metadatası.
-// Audit: geçmiş analizlerin hangi promptla üretildiğini birebir görmek için.
 router.get('/prompt/:version', (req, res, next) => {
   try {
-    // Sürüm kontrolü ÖNCE yapılır: buildSystemPrompt bilinmeyen sürümde hata
-    // fırlatır; 404 dalının erişilebilir kalması için meta araması önce gelmeli.
     const meta = prompts.listPromptVersions().find((v) => v.version === req.params.version);
     if (!meta) {
       return res.status(404).json({
@@ -71,9 +59,6 @@ router.get('/prompt/:version', (req, res, next) => {
   }
 });
 
-// AI çağrı metrikleri: ortalama/p95 latency, parse başarı oranı, model ve prompt
-// sürümü kırılımı. Süreç ömrü özeti + JSONL dosyasının dosya-bazlı özeti.
-// Yalnızca teknik metrik döner; klinik içerik ve kimlik verisi içermez.
 router.get('/metrics', (req, res) => {
   res.json({
     ok: true,
@@ -83,9 +68,6 @@ router.get('/metrics', (req, res) => {
   });
 });
 
-// Karşı-olgusal (what-if) analiz: mevcut vaka verisi üzerinden TEK bir form alanı
-// değiştirilerek aynı pipeline yeniden çalıştırılır. Sonuç geçmişe KAYDEDİLMEZ;
-// yalnızca "önce/sonra" karşılaştırması için döner (data.edit + data.after).
 router.post('/what-if', async (req, res, next) => {
   try {
     const startedAt = Date.now();
@@ -108,7 +90,6 @@ router.post('/what-if', async (req, res, next) => {
   }
 });
 
-// Vaka analizi: yapılandırılmış vaka verisini alır, pipeline'dan geçirir, sonucu döner.
 router.post('/analyze', async (req, res, next) => {
   try {
     const startedAt = Date.now();

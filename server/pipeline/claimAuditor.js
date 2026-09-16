@@ -1,21 +1,10 @@
-// KATMAN 3.5: İddia denetçisi (claim auditor).
-// Modelin ürettiği klinik iddiaları, hastanın GERÇEK verisiyle (yapılandırılmış vaka)
-// ve kanıt katmanının deterministik çıktısıyla karşılaştırır; uydurma/desteklenmeyen
-// iddiaları KULLANICIYA İŞARETLER, sonucu sessizce silmez.
-//
-// Tasarım ilkesi: tıbbi karar desteğinde bilgi silmek yerine işaretlemek güvenlidir.
-// Bu nedenle denetçi yalnızca audit_flags üretir; tanı kartlarını değiştirmez.
-// Denetçi MODELDEN BAĞIMSIZDIR: yalnızca vaka + kanıt bağlamı + normalize edilmiş
-// model çıktısı arasındaki tutarlılığa bakar.
 const logger = require('../logger');
 const { matchesAnyCandidate } = require('./responseValidator');
 
-// Denetim eşikleri: yanlış pozitifleri sınırlamak için muhafazakâr seçildi.
 const MIN_CLAIM_TOKENS = 3;       // Daha kısa iddialar üzerinde hüküm kurulamaz
 const UNSUPPORTED_RATIO = 0.25;   // İçerik tokenlarının %25'inden azı vakada geçiyorsa uydurma şüphesi
 const CONTRADICT_TOKENS = 2;      // Zayıflatıcı kanıt metniyle en az 2 ortak token = çelişkili kullanım
 
-// Türkçe + İngilizce yaygın dolgu kelimeleri: token karşılaştırmasından çıkarılır.
 const STOPWORDS = new Set([
   've', 'ile', 'için', 'icin', 'olarak', 'olan', 'olabilir', 'gibi', 'daha', 'çok', 'cok',
   'az', 'var', 'yok', 'değil', 'degil', 'ancak', 'fakat', 'kadar', 'sonra', 'önce', 'once',
@@ -44,17 +33,11 @@ function overlapRatio(claimTokens, corpusTokenSet) {
   let hits = 0;
   for (const t of claimTokens) {
     if (corpusTokenSet.has(t)) hits += 1;
-    // Kısmi kök eşleşmesi (Türkçe ekler): token korpusdaki bir tokeni içeriyorsa sayılır.
     else if ([...corpusTokenSet].some((c) => c.length >= 4 && (t.includes(c) || c.includes(t)))) hits += 1;
   }
   return hits / claimTokens.length;
 }
 
-/**
- * Vakadaki tüm gerçek veriyi tek bir token kümesine toplar.
- * @param {object} structuredCase - caseNormalizer çıktısı
- * @param {object} evidenceContext - evidenceService çıktısı (candidates + context)
- */
 function buildCorpusTokens(structuredCase, evidenceContext) {
   const patientSet = buildPatientCorpusTokens(structuredCase);
   const texts = [];
@@ -67,8 +50,6 @@ function buildCorpusTokens(structuredCase, evidenceContext) {
   for (const v of Object.values(c.medical_history || {})) texts.push(v);
   for (const v of Object.values(c.geographic_and_lifestyle_history || {})) texts.push(v);
 
-  // Kanıt katmanının eşleştirdiği kanıtlar + aday kriter notları da gerçek bağlam sayılır;
-  // model bunları paraphrase edebilir, uydurma sayılmamalıdır.
   for (const cand of (evidenceContext && evidenceContext.candidates) || []) {
     for (const e of cand.matched_supporting || []) texts.push(e.finding, e.matched, e.context_snippet);
     for (const e of cand.matched_against || []) texts.push(e.finding, e.matched, e.context_snippet);
@@ -80,9 +61,6 @@ function buildCorpusTokens(structuredCase, evidenceContext) {
   return set;
 }
 
-// Hasta korpusu yalnızca gerçekten girilmiş hasta verilerinden oluşur.
-// Bilgi tabanı notları bu kümeye eklenmez; aksi halde "ANA giriş kriteridir"
-// gibi kaynak bilgileri yanlışlıkla "ANA pozitif" hasta bulgusu gibi geçebilir.
 function buildPatientCorpusTokens(structuredCase) {
   const texts = [];
   const c = structuredCase || {};
@@ -98,15 +76,10 @@ function buildPatientCorpusTokens(structuredCase) {
   return set;
 }
 
-/**
- * Vakada hiç ölçülmemiş laboratuvar/test adlarının token kümeleri.
- * Kaynak: kanıt katmanının adaylarına önerdiği key_tests listesi.
- */
 function buildTestNameTokens(evidenceContext) {
   const tests = [];
   for (const cand of (evidenceContext && evidenceContext.candidates) || []) {
     for (const t of cand.key_tests || []) {
-      // key_tests öğeleri KB sözleşmesinde { test, rationale, source_id } objeleridir.
       tests.push(t && typeof t === 'object' ? t.test : t);
     }
   }
@@ -121,11 +94,6 @@ function patientLabTokens(structuredCase) {
   return set;
 }
 
-/**
- * Bir tanının iddialarını gerçek vaka verisiyle denetler ve işaret listesi döndürür.
- * @param {object} diagnosis - normalize edilmiş tanı kartı
- * @param {object|null} candidate - eşleşen kanıt adayı (yoksa null)
- */
 function auditDiagnosis(diagnosis, candidate, corpus) {
   const flags = [];
   const { corpusTokenSet, patientTokenSet, testNameTokenSets, labTokenSet } = corpus;
@@ -155,12 +123,8 @@ function auditDiagnosis(diagnosis, candidate, corpus) {
         });
       }
 
-      // Kanıt tabanında hiç karşılığı olmayan bir ifade için aşağıdaki
-      // test/çelişki kontrolleri anlamlı değildir.
       if (evidenceRatio < UNSUPPORTED_RATIO) continue;
 
-      // Uygulanmamış test referansı: iddia, vakadaki laboratuvar sonuçlarında
-      // olmayan bir anahtar teste atıf yapıyorsa işaretle.
       for (const testTokens of testNameTokenSets) {
         if (testTokens.every((t) => tokens.some((c) => c.includes(t) || t.includes(c)))) {
           const performed = testTokens.some((t) => labTokenSet.has(t));
@@ -178,8 +142,6 @@ function auditDiagnosis(diagnosis, candidate, corpus) {
         }
       }
 
-      // Çelişkili kanıt kullanımı: iddia, kanıt katmanının bu tanı için ZAYIFLATICI
-      // olarak eşleştirdiği bir bulguyu destekleyici gibi sunuyorsa işaretle.
       if (claimType !== 'findings_against' && candidate) {
         for (const against of candidate.matched_against || []) {
           const againstTokens = contentTokens(against.finding);
@@ -198,9 +160,6 @@ function auditDiagnosis(diagnosis, candidate, corpus) {
         }
       }
 
-      // Yapılandırılmış gerekçe alanları da hasta verisine dayanmalıdır.
-      // discriminative_findings içindeki "ANA pozitifliği" gibi ifadeler,
-      // yalnızca bilgi tabanında geçse bile hasta bulgusu kabul edilmez.
       const reasoning = diagnosis.reasoning && typeof diagnosis.reasoning === 'object'
         ? diagnosis.reasoning
         : {};
@@ -228,8 +187,6 @@ function auditDiagnosis(diagnosis, candidate, corpus) {
         }
       }
 
-      // evidence_notes kaynak açıklamasıdır; hasta bulgusu denetimine dahil edilmez.
-      // Ancak test adı referansı gibi riskli içerikler yine mevcut test kümeleriyle kontrol edilir.
       for (const claim of diagnosis.evidence_notes || []) {
         const tokens = contentTokens(claim);
         if (tokens.length < MIN_CLAIM_TOKENS) continue;
@@ -253,8 +210,6 @@ function auditDiagnosis(diagnosis, candidate, corpus) {
     }
   }
 
-  // Çelişki şiddeti uyuşmazlığı: model "çelişki yok" derken kanıt katmanı
-  // anlamlı çelişki tespit etmişse (veya tersi) işaretle.
   if (candidate) {
     const modelSeverity = diagnosis.contradiction_assessment && diagnosis.contradiction_assessment.severity;
     const evidenceSeverity = candidate.contradiction && candidate.contradiction.severity;
@@ -273,13 +228,6 @@ function auditDiagnosis(diagnosis, candidate, corpus) {
   return flags;
 }
 
-/**
- * Normalize edilmiş model çıktısını gerçek vaka + kanıt bağlamına karşı denetler.
- * @param {object} validated - responseValidator çıktısı
- * @param {object} structuredCase - caseNormalizer çıktısı
- * @param {object} evidenceContext - evidenceService çıktısı
- * @returns {Array<{type: string, diagnosis: string, field: string, claim: string, detail: string, severity: string}>}
- */
 function auditClaims(validated, structuredCase, evidenceContext) {
   const corpus = {
     corpusTokenSet: buildCorpusTokens(structuredCase, evidenceContext),

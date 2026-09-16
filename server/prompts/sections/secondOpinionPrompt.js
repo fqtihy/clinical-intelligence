@@ -1,7 +1,3 @@
-// PROMPT BÖLÜMÜ: second_opinion_prompt
-// İkinci görüş motoru (ürünün ana değeri): doktorun düşünmediği ihtimalleri arar ve
-// doktorun mevcut düşüncesini kanıtlarla sorgular.
-// v1.x'te bu metin physician_comparison bölümünün içindeydi; v2.0 ile ayrı bölüme alındı.
 module.exports = {
   id: 'second_opinion',
   title: 'SECOND OPINION ENGINE',

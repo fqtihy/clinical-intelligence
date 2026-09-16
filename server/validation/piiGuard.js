@@ -1,5 +1,3 @@
-// PII koruması: ham vaka yükü model katmanına ulaşmadan önce reddedilir.
-// Değerler hiçbir zaman hata/log metnine yazılmaz.
 const { ApiError } = require('../middleware/errorHandler');
 
 const PII_PATTERNS = [

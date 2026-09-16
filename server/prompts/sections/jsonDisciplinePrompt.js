@@ -1,8 +1,3 @@
-// PROMPT BÖLÜMÜ: json_discipline_prompt (v1.1+)
-// JSON dışı üretimi ("Tabii, işte analiziniz: ..." tarzı öncü/arka metin, gerekçelendirme
-// paragrafı, markdown çiti) kesin biçimde yasaklayan kısa ve sert disiplin bölümü.
-// v1.0'da yoktur; v1.1 ile eklenen yamadır. Structured Output güvenilirliğini artırmak
-// için eklenmiştir; etkisi A/B karşılaştırmasıyla ölçülebilir (bkz. versions.js notları).
 module.exports = {
   id: 'json_discipline',
   title: 'JSON OUTPUT DISCIPLINE',

@@ -1,21 +1,6 @@
-// ---------------------------------------------------------------------------
-// MALİYET TAKİBİ — token usage üzerinden tahmini API maliyeti.
-// ---------------------------------------------------------------------------
-// Amaç: "Bir vaka analizinin AI maliyeti ne kadar?" sorusunu sayılarla cevaplamak.
-//
-// Veri kaynağı: observability/metrics'in yazdığı logs/ai-metrics.jsonl
-// (her ai_call kaydında usage.prompt_tokens / usage.completion_tokens var).
-//
-// Maliyetler USD/1M token cinsindendir ve PRICE_TABLE'da tutulur. Fiyatlar
-// sağlayıcının yayınlandığı liste fiyatlarına göre MANUEL olarak güncellenir;
-// bu nedenle sonuçlar "estimated" (tahmini) etiketi taşır. Fiyat değiştiğinde
-// yalnızca bu tablo güncellenir; kayıtlar ham token olarak saklandığı için
-// geçmiş maliyetler yeniden hesaplanabilir.
-// ---------------------------------------------------------------------------
 
 const fs = require('fs');
 
-// USD per 1.000.000 token. [input, output]
 const PRICE_TABLE = {
   'deepseek/deepseek-chat': { input: 0.27, output: 1.1 },
   'openai/gpt-4o-mini': { input: 0.15, output: 0.6 },
@@ -37,8 +22,6 @@ function costOf(usage, provider, model) {
   return (inTok / 1e6) * price.input + (outTok / 1e6) * price.output;
 }
 
-// Vaka (request) bazında birleştirme: bir analiz birden fazla ai_call içerebilir
-// (onarım denemesi/retry). Aynı request_id'nin çağrıları tek vaka sayılır.
 function aggregateFromLines(lines) {
   const calls = [];
   for (const line of lines) {
@@ -96,10 +79,6 @@ function aggregateFromLines(lines) {
 
 function round6(n) { return Number(n.toFixed(6)); }
 
-/**
- * JSONL dosyasından vaka bazlı token/maliyet raporu üretir.
- * @param {{limit?: number}} [opts] - Sondan en fazla n satır okunur
- */
 function getCostReport(opts = {}) {
   const limit = opts.limit || 20000;
   let lines = [];
@@ -145,7 +124,6 @@ function zeroTotals() {
 const path = require('path');
 const METRICS_FILE = path.join(__dirname, '..', '..', 'logs', 'ai-metrics.jsonl');
 
-// Regression runner gibi dışarıdan çağıranlar için vaka bazlı satırlar.
 function perCaseRows(opts = {}) {
   return getCostReport(opts).per_case;
 }

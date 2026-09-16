@@ -1,9 +1,3 @@
-// Kanıta dayalı çıkarım motoru.
-// Pipeline: yapılandırılmış vaka -> aday hastalıklar (kaynak tabanı taraması) ->
-//           kanıt çıkarımı (destekleyici/zayıflatıcı) -> çelişki tespiti -> AI sentezi.
-//
-// Bu modül yalnızca server/knowledge/knowledgeBase.js içindeki kürasyonlu kaynakları kullanır;
-// dış ağ çağrısı yoktur, tamamen deterministiktir (çevrimdışı test edilebilir).
 const KB = require('./knowledgeBase');
 
 const MIN_SCORE = 1;          // Bir adayın listeye girebilmesi için gereken minimum puan
@@ -18,10 +12,6 @@ function norm(value) {
   return String(value || '').toLocaleLowerCase('tr').replace(/\s+/g, ' ').trim();
 }
 
-/**
- * Yapılandırılmış vakayı kanıt eşlemesi için aranabilir korpusa çevirir.
- * @param {object} c - caseNormalizer çıktısı
- */
 function buildCorpus(c) {
   const patient = c.patient || {};
   const symptoms = Array.isArray(c.symptoms) ? c.symptoms : [];
@@ -62,7 +52,6 @@ function textIncludes(list, term) {
   return null;
 }
 
-// Bir listede verilen terimlerden HERHANGİ birini arar (pattern'lerdeki tüm eş anlamlılar denenir).
 function matchAnyTerm(list, terms) {
   for (const term of terms || []) {
     const hit = textIncludes(list, term);
@@ -71,10 +60,6 @@ function matchAnyTerm(list, terms) {
   return null;
 }
 
-/**
- * Tek bir kalıbı vaka korpusuna karşı eşleştirir.
- * @returns {{term: string, context: string}|null} Eşleşen terim ve bağlam (kısaltılmış)
- */
 function matchPattern(pattern, corpus) {
   switch (pattern.type) {
     case 'symptom': {
@@ -135,9 +120,6 @@ function evidenceItem(pattern, match) {
   };
 }
 
-/**
- * Tek durum için puanı ve eşleşen kanıtları hesaplar.
- */
 function scoreCondition(condition, corpus) {
   const supporting = [];
   const against = [];
@@ -154,19 +136,12 @@ function scoreCondition(condition, corpus) {
     const match = matchPattern(pattern, corpus);
     if (match) {
       against.push(evidenceItem(pattern, match));
-      // Zayıflatıcı kanıt skoru DEĞİŞTİRMEZ; çelişki şiddetini (contradiction) belirler.
-      // Aday sıralaması destekleyici kanıt gücüne dayanır, karşıt kanıt ayrı raporlanır.
     }
   }
 
   return { condition, score, supporting, against };
 }
 
-/**
- * Yapılandırılmış vakadan kanıt bağlamı üretir.
- * @param {object} structuredCase - caseNormalizer çıktısı
- * @returns {{ candidates: Array, sources: Array, context: object, trail: Array }}
- */
 function buildEvidenceContext(structuredCase) {
   const corpus = buildCorpus(structuredCase);
 
@@ -177,9 +152,7 @@ function buildEvidenceContext(structuredCase) {
 
   const top = scored.slice(0, MAX_CANDIDATES);
 
-  // Çelişki tespiti: zayıflatıcı kanıt ağırlıklarının toplamına göre şiddet.
   const candidates = top.map((entry) => {
-    // KB'de zayıflatıcı kanıt ağırlıkları negatiftir; şiddet için büyüklük kullanılır.
     const againstWeight = Math.abs(entry.against.reduce((sum, item) => sum + item.weight, 0));
     const severity = againstWeight === 0 ? 'none' : (againstWeight >= SEVERITY_THRESHOLD ? 'significant' : 'minor');
     return {
@@ -201,7 +174,6 @@ function buildEvidenceContext(structuredCase) {
     };
   });
 
-  // Kaynaklar: adayların kullandığı kaynakların birleşimi (sıra korunur).
   const seen = new Set();
   const sources = [];
   for (const candidate of candidates) {
@@ -213,7 +185,6 @@ function buildEvidenceContext(structuredCase) {
     }
   }
 
-  // AI'a gidecek sıkılaştırılmış bağlam.
   const context = {
     retrieval_note: 'Aşağıdaki kanıtlar sunucu tarafında güvenilir tıbbi kaynaklardan (sınıflama kriterleri ve kılavuzlar) çıkarılmıştır. Model tıbbi bilgiyi kendi belleğinden EKLEMEZ; yalnızca bu bağlamdaki kanıtlar üzerinden akıl yürütür.',
     candidates: candidates.map((c) => ({

@@ -1,28 +1,3 @@
-// ---------------------------------------------------------------------------
-// REGRESSION RUNNER — sentetik vaka tabanlı regression testleri.
-// ---------------------------------------------------------------------------
-// AMAÇ: Bilimsel benchmark DEĞİL. Yazılımın kendi regression testleri.
-// "Yarın promptu değiştirdiğimde sistem bozuldu mu?" sorusunu cevaplar.
-//
-// Nasıl çalışır:
-//   1) cases/case_*.json dosyaları yüklenir (sentetik lokal test vakaları).
-//   2) Her vaka, doğrudan pipeline üzerinden (analyzeCase) uçtan uca çalıştırılır;
-//      hangi provider'ın aktif olduğu pipeline için önemsizdir (.env'den gelir).
-//   3) Her vakada iki katman kontrol yapılır:
-//        a) YAPISAL (her zaman): sonuç zarfı, şema doğrulaması, tanı kartı sayısı...
-//        b) BEKLENTİ (case dosyasındaki 'expected' bloğu): hedef tanı listenin
-//           başında mı, listede var mı, olmaması gerekenler gerçekten yok mu...
-//   4) Sonuçlar regression/baseline.json ile karşılaştırılır:
-//        - Beklenti ihlali -> FAIL (exit code 1)
-//        - Baseline'dan sapma -> DIFF (bilgilendirici; prompt değişikliklerinin izi)
-//   5) Rapor regression/reports/ altına yazılır.
-//
-// Kullanım:
-//   node regression/run_regression.js                     -> baseline'a karşı çalıştır
-//   node regression/run_regression.js --update-baseline   -> baseline'ı güncelle
-//   node regression/run_regression.js --mock              -> provider=mock, yalnız yapısal testler (API anahtarı gerekmez)
-//   node regression/run_regression.js --case case_001     -> tek vakayı çalıştır
-// ---------------------------------------------------------------------------
 
 const fs = require('fs');
 const path = require('path');
@@ -33,9 +8,6 @@ const REGRESSION_DIR = path.join(PROJECT, 'regression');
 const BASELINE_PATH = path.join(REGRESSION_DIR, 'baseline.json');
 const REPORTS_DIR = path.join(REGRESSION_DIR, 'reports');
 
-// ---------------------------------------------------------------------------
-// CLI argümanları (config modülü yüklenmeden ÖNCE provider kararı verilmeli)
-// ---------------------------------------------------------------------------
 const args = process.argv.slice(2);
 const wantsMock = args.includes('--mock');
 const wantsUpdate = args.includes('--update-baseline');
@@ -51,9 +23,6 @@ const { ANALYSIS_SCHEMA, SCHEMA_VERSION } = require(path.join(PROJECT, 'server/s
 const KB = require(path.join(PROJECT, 'server/knowledge/knowledgeBase'));
 const costTracker = require(path.join(PROJECT, 'server/observability/costTracker'));
 
-// ---------------------------------------------------------------------------
-// Yardımcılar
-// ---------------------------------------------------------------------------
 
 function norm(value) {
   return String(value || '').toLocaleLowerCase('tr').replace(/\s+/g, ' ').trim();
@@ -82,7 +51,6 @@ function loadCases() {
   return cases;
 }
 
-// Tanı adını bilgi tabanı kaydıyla eşleştirir (responseValidator.matchesAnyCandidate ile aynı gevşek eşleşme).
 function kbEntryFor(name) {
   const target = norm(name);
   if (!target) return null;
@@ -105,9 +73,6 @@ function findWithKeywords(diagnoses, keywords) {
   return null;
 }
 
-// ---------------------------------------------------------------------------
-// Beklenti denetimi (case dosyasındaki 'expected' bloğu)
-// ---------------------------------------------------------------------------
 function checkExpectations(caseData, result) {
   const checks = [];
   const diagnoses = (result.result && result.result.differential_diagnoses) || [];
@@ -116,31 +81,24 @@ function checkExpectations(caseData, result) {
 
   const add = (name, pass, detail) => checks.push({ check: name, pass, detail });
 
-  // --- zorunlu yapısal kontroller (her vakada) ---
   add('zarf_yapisi', !!(result && result.result && result.case), 'analyzeCase sonuç zarfı eksiksiz mi');
   add('sema_dogrulandi', !!(result.result && result.result.structured_output && result.result.structured_output.validated === true), `schema_version=${result.result && result.result.structured_output ? result.result.structured_output.schema_version : '?'}`);
   add('tani_karti_1_5', diagnoses.length >= 1 && diagnoses.length <= 5, `tanı sayısı: ${diagnoses.length}`);
 
-  // --- AI Regression Test Suite: alan doluluğu kontrolleri ---
-  // 2) Her hastalık sonucu mevcut mu?
   const nameless = diagnoses.filter((d) => !d || typeof d.name !== 'string' || d.name.trim().length === 0).length;
   add('her_hastalik_sonucu_mevcut', nameless === 0, nameless === 0 ? `${diagnoses.length} tanı kartının tümü adlandırılmış` : `${nameless} kartta isim yok`);
 
-  // 3) Supporting findings mevcut mu? (alan varlığı her modda, doluluk yalnızca gerçek modelde)
   const noSuppField = diagnoses.filter((d) => !Array.isArray(d.supporting_findings)).length;
   const emptySupp = diagnoses.filter((d) => Array.isArray(d.supporting_findings) && d.supporting_findings.length === 0).map((d) => d.name || '?');
   add('supporting_findings_alani', noSuppField === 0, noSuppField === 0 ? 'tüm kartlarda supporting_findings alanı var' : `${noSuppField} kartta supporting_findings alanı yok`);
 
-  // 4) Contradicting findings mevcut mu? (klinik olarak boş olabilir; alan varlığı yeterli)
   const noContraField = diagnoses.filter((d) => !Array.isArray(d.findings_against)).length;
   add('contradicting_findings_alani', noContraField === 0, noContraField === 0 ? 'tüm kartlarda findings_against alanı var' : `${noContraField} kartta findings_against alanı yok`);
 
-  // 5) Missing information mevcut mu? (kart bazında alan + sonuç genelinde en az bir madde)
   const noMissingField = diagnoses.filter((d) => !Array.isArray(d.missing_or_uncertain_information)).length;
   const topMissing = (result.result && Array.isArray(result.result.important_missing_information)) ? result.result.important_missing_information : null;
   add('missing_information_alani', noMissingField === 0 && topMissing !== null, noMissingField === 0 && topMissing !== null ? 'kart bazında ve sonuç genelinde missing information alanları var' : `eksik alan: kart=${noMissingField}, genel=${topMissing === null ? 'yok' : 'var'}`);
 
-  // --- içerik kontrolleri (mock modunda anlamsız olduğundan yalnızca gerçek modelde) ---
   if (wantsMock) return checks;
 
   add('supporting_findings_mevcut', emptySupp.length === 0, emptySupp.length === 0 ? 'tüm tanı kartlarında en az bir destekleyici bulgu var' : `boş: ${emptySupp.join(', ')}`);
@@ -185,13 +143,7 @@ function checkExpectations(caseData, result) {
   return checks;
 }
 
-// ---------------------------------------------------------------------------
-// Baseline karşılaştırma (diff)
-// ---------------------------------------------------------------------------
 
-// Bir vakadan ileride diff'lenecek kompakt özet. Zaman damgası ve serbest metin
-// alanları (özet cümleleri, gerekçeler) bilinçli olarak hariç tutulur; yalnızca
-// yapısal kimlik saklanır.
 function snapshotOf(caseData, result) {
   const r = result.result || {};
   return {
@@ -236,7 +188,6 @@ function loadBaseline() {
   }
 }
 
-// Koşunun vaka bazlı maliyet dökümünden toplam özet üretir.
 function costSummary(results) {
   const withCost = results.filter((r) => r.cost);
   if (withCost.length === 0) return null;
@@ -252,9 +203,6 @@ function costSummary(results) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Raporlama
-// ---------------------------------------------------------------------------
 
 function printTable(rows) {
   const widths = {};
@@ -266,9 +214,6 @@ function printTable(rows) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Ana akış
-// ---------------------------------------------------------------------------
 
 async function main() {
   const cases = loadCases();
@@ -282,7 +227,6 @@ async function main() {
   let expectationFailures = 0;
   let runFailures = 0;
   let diffCount = 0;
-  // Maliyet takibi: çalıştırma öncesi kayıtlar; sonradan görünenler bu koşunun çağrılarıdır.
   const seenRequestsBefore = new Set(costTracker.getCostReport().per_case.map((r) => r.request_id));
 
   for (const caseData of cases) {
@@ -318,7 +262,6 @@ async function main() {
     const failedChecks = checks.filter((c) => !c.pass);
     expectationFailures += failedChecks.length;
 
-    // Bu vakaya ait AI çağrılarının token/maliyet dökümü (vaka = request_id, retry dahil).
     let caseCost = null;
     try {
       const fresh = costTracker.getCostReport();
@@ -369,7 +312,6 @@ async function main() {
     });
   }
 
-  // --- özet tablo ---
   console.log('ÖZET');
   printTable([
     ['vaka', 'beklenti', 'diff', 'süre'],
@@ -381,7 +323,6 @@ async function main() {
     ]),
   ]);
 
-  // --- baseline güncelleme veya rapor yazma ---
   const modelInfo = modelClient.getModelInfo();
   const report = {
     generatedAt: new Date().toISOString(),
@@ -422,8 +363,6 @@ async function main() {
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2) + '\n', 'utf8');
   console.log(`Rapor yazıldı: ${path.relative(PROJECT, reportPath)}`);
 
-  // Analiz kalitesi beklentileri mock provider'da anlamsızdır; mock modunda
-  // yalnızca pipeline'ın uçtan uca çalışması hedeflenir.
   const blockingFailures = runFailures + (wantsMock ? 0 : expectationFailures);
   process.exitCode = blockingFailures > 0 ? 1 : 0;
 }

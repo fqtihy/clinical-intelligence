@@ -1,15 +1,6 @@
-// Uygulama genelinde kullanılan hata tipleri ve merkezi hata yakalayıcı.
-// Kullanıcıya hiçbir zaman stack trace gösterilmez; 5xx hatalar kullanıcı dostu
-// genel bir mesaja dönüşür, detaylar geliştirici loguna yazılır.
 const logger = require('../logger');
 
 class ApiError extends Error {
-  /**
-   * @param {number} status  HTTP durum kodu
-   * @param {string} code    Makinece okunabilir hata kodu (ör. VALIDATION_FAILED)
-   * @param {string} message Kullanıcıya gösterilecek mesaj
-   * @param {object} [details] Ek doğrulama detayları (yalnızca 4xx hatalarda döner)
-   */
   constructor(status, code, message, details) {
     super(message);
     this.name = 'ApiError';
@@ -26,9 +17,7 @@ function notFoundHandler(req, res) {
   });
 }
 
-// eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
-  // express.json ayrıştırma hatası: kullanıcıya ham ayrıştırıcı mesajı gösterilmez.
   if (err.type === 'entity.parse.failed' || err.type === 'entity.too.large') {
     const code = err.type === 'entity.too.large' ? 'PAYLOAD_TOO_LARGE' : 'INVALID_JSON';
     const message = err.type === 'entity.too.large'

@@ -1,13 +1,3 @@
-// ci_evidence_test.js — Kanıt katmanı (knowledgeBase + evidenceService) çevrimdışı testleri.
-// Dış ağ çağrısı yoktur; deterministik modüller üzerinde doğrulama yapar:
-//   1) KB bütünlüğü (benzersiz id, kaynak referansları, pattern ağırlıkları)
-//   2) Demo vaka (Türkiye, 2-3 gün ataklar, kendiliğinden düzelme) -> FMF tepede,
-//      TRAPS significant çelişkiyle zayıflar, SLE/AOSD/viral adayları üretilir
-//   3) Determinizm: aynı girdi -> birebir aynı çıktı
-//   4) buildUserMessage: EVIDENCE CONTEXT ayrı mesaj DEĞİL, user mesajına gömülür
-//      (retry testi messages.length === 2 bekler)
-//   5) analyzeCase: sources kanıt katmanından doldurulur; aday filtresi
-//      aday-dışı tanıyı eler, hepsi elenirse lenient fallback orijinali korur
 const path = require('path');
 const assert = require('assert');
 
@@ -39,8 +29,6 @@ const { buildEvidenceContext } = require(path.join(PROJECT, 'server/knowledge/ev
 const { buildUserMessage, buildSystemPrompt } = require(path.join(PROJECT, 'server/prompts/systemPrompt.js'));
 const { normalizeAndValidate } = require(path.join(PROJECT, 'server/validation/caseNormalizer.js'));
 
-// ---- Ortak vaka: Türkiye'de yaşayan genç kadın; 2-3 gün süren, kendiliğinden
-// düzelen, 3-4 haftada bir tekrarlayan ateş atakları (FMF profili).
 const DEMO_PAYLOAD = {
   patient: { age: 21, sex: 'female' },
   symptoms: [
@@ -178,7 +166,6 @@ async function run() {
     assert(msg.includes('EVIDENCE CONTEXT:'), 'kanıt bağlamı gömülmedi');
     assert(msg.includes('retrieval_note'), 'bağlam yönergesi yok');
     assert(msg.includes('"score"'), 'aday skorları bağlamda yok');
-    // model yalnızca eşleşen kanıtları görür; ham tüm durumları değil
     assert(!msg.includes('supporting_patterns'), 'ham pattern kuralları sızmamalı');
   });
   check('bağlam verilmezse mesaj eski davranışta kalır', () => {

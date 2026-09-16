@@ -1,15 +1,3 @@
-// PROMPT SÜRÜM KAYIT DEFTERİ (prompt version registry).
-// Bir sürüm = bölümlerin sıralı kompozisyonu + sürüm notları. Prompt metni kopyalanmaz:
-// bölümler tek kaynaktan (sections/) gelir; sürüm yalnızca HANGİ bölümlerin hangi
-// sırada birleşeceğini tanımlar. Böylece "v1 ile v2 arasında kalite nasıl değişti?"
-// sorusu gerçek bir A/B deneyine dönüşür: her analiz sonucu prompt_version taşır
-// (bkz. resultFormatter), sonuçlar sürüme göre karşılaştırılabilir.
-//
-// Sürümleme kuralları (semver benzeri):
-//   MAJOR (2.x): bölüm kompozisyonu/yapısı değişti (bölüm eklendi/bölündü/sıra değişti)
-//   MINOR/PATCH (x.1): mevcut kompozisyona ekleme veya küçük metin yaması
-//   Bir sürüm bir kez yayınlandıktan sonra metni ASLA değiştirilmez; değişiklik
-//   yeni sürüm açar. Bu, geçmiş analizlerin hangi promptla üretildiğini kanıtlar.
 
 const registry = {
   '1.0': {
@@ -114,7 +102,6 @@ const registry = {
   },
 };
 
-// Varsayılan sürüm: en güncül "stable" (veya stable yoksa en yüksek sürüm).
 function highestVersion(a, b) {
   const pa = a.split('.').map(Number);
   const pb = b.split('.').map(Number);
@@ -131,12 +118,7 @@ function defaultVersion() {
 module.exports = {
   registry,
   DEFAULT_VERSION: defaultVersion(),
-  /**
-   * Sürüm tanımını döndürür; bilinmeyen sürümde null.
-   * @param {string} version
-   */
   getVersion: (version) => (version && registry[version] ? { version, ...registry[version] } : null),
-  /** Kayıtlı tüm sürümlerin metadatası (en eskiden yeniye). */
   listVersions: () => Object.entries(registry).map(([version, meta]) => ({
     version,
     status: meta.status,

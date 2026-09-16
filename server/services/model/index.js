@@ -1,18 +1,8 @@
-// Model soyutlama katmanı: üst katmanlar yalnızca createChatCompletion sözleşmesini
-// kullanır. Provider değiştirmek için .env'de MODEL_PROVIDER değerini değiştirmek
-// yeterlidir; pipeline, validation veya knowledge katmanı dokunulmaz.
-//
-// METRİK KATMANI: her chat completion çağrısı, teknik kaydıyla (latency, token
-// usage, hata kodu) observability/metrics'e yazılır. İstek kimliği ve prompt
-// sürümü, pipeline'ın çağrı içinde verdiği opts.requestId/opts.promptVersion'dan gelir.
 const config = require('../../config');
 const logger = require('../../logger');
 const { ApiError } = require('../../middleware/errorHandler');
 const metrics = require('../../observability/metrics');
 
-// Provider kayıt tablosu: yeni model = buraya tek satır eklemek.
-// Lazy require ile provider modülleri yalnızca kullanıldığında yüklenir;
-// bu sayede testler provider modülünün exports özelliğini stub edebilir.
 const PROVIDERS = {
   deepseek: () => require('./providers/deepseekProvider'),
   openai: () => require('./providers/openaiProvider'),
@@ -29,12 +19,6 @@ function resolveProvider() {
   return loader();
 }
 
-/**
- * Aktif provider üzerinden chat completion çağırır; çağrının teknik metriklerini kaydeder.
- * @param {{messages: Array<{role: string, content: string}>, temperature?: number,
- *          requestId?: string, attempt?: number, promptVersion?: string, schemaVersion?: string}} opts
- * @returns {Promise<{content: string, finishReason: string}>}
- */
 async function createChatCompletion(opts) {
   const provider = resolveProvider();
   const startedAt = Date.now();

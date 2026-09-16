@@ -1,6 +1,3 @@
-// Backend REST API istemcisi.
-// Tüm sunucu iletişimi burada toplanır; hatalar kullanıcı dostu mesaja dönüştürülür.
-// Teknik detay (stack trace vb.) asla gösterilmez.
 
 async function request(path, options = {}) {
   let response;
@@ -17,7 +14,6 @@ async function request(path, options = {}) {
   try {
     body = await response.json();
   } catch {
-    /* geçersiz JSON gövdesi: aşağıda güvenli mesaja dönüşür */
   }
 
   if (!response.ok) {
@@ -30,12 +26,10 @@ async function request(path, options = {}) {
   return body;
 }
 
-/** GET /api/health — sunucu durumu ve AI yapılandırması. */
 export function getHealth() {
   return request('/api/health');
 }
 
-/** POST /api/analyze — vaka verisini gönderir, analiz sonucunu döndürür. */
 export function analyzeCase(casePayload) {
   return request('/api/analyze', {
     method: 'POST',
@@ -43,7 +37,6 @@ export function analyzeCase(casePayload) {
   });
 }
 
-/** POST /api/what-if — tek alan değiştirilmiş vakanın karşı-olgusal analizi. */
 export function whatIfAnalysis(casePayload, edit) {
   return request('/api/what-if', {
     method: 'POST',
@@ -51,7 +44,6 @@ export function whatIfAnalysis(casePayload, edit) {
   });
 }
 
-/** GET /api/metrics — teknik metrikler + tahmini API maliyeti. */
 export function getMetrics() {
   return request('/api/metrics');
 }

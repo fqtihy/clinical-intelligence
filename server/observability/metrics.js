@@ -1,29 +1,9 @@
-// ---------------------------------------------------------------------------
-// AI ÇAĞRI METRİK MODÜLÜ — teknik gözlemlenebilirlik katmanı.
-// ---------------------------------------------------------------------------
-// Amaç: her AI çağrısının teknik kaydını tutmak (timestamp, model, latency,
-// token usage, parse success, error...). Klinik içerik KAYDEDİLMEZ; hasta
-// kimliği ve kişisel veri asla buraya girmez (PII-FREE sözleşmesi).
-//
-// Bu modülle cevaplanan sorular:
-//   "DeepSeek ortalama kaç saniyede cevap veriyor?"
-//   "JSON parse hatası oranı kaç?"
-//   "Prompt v3 ile yapılandırılmış cevap (şemaya uyan) oranı % kaç?"
-//
-// İki çıktı katmanı:
-//   1) JSONL dosyası: logs/ai-metrics.jsonl (append-only; analitik için)
-//   2) Bellek içi özet: süreç ömründe birikmiş aggregate'lar; /api/metrics ile açılır
-//
-// Sözleşme: recordAiCall bir kez çağrılır (provider katmanı), recordParseResult
-// istek başına bir kez çağrılır (pipeline katmanı); ikisi request_id ile eşleşir.
-// ---------------------------------------------------------------------------
 const fs = require('fs');
 const path = require('path');
 
 const LOGS_DIR = path.join(__dirname, '..', '..', 'logs');
 const METRICS_FILE = path.join(LOGS_DIR, 'ai-metrics.jsonl');
 
-// Bellek içi özet: süreç yeniden başladığında sıfırlanır (kalıcı toplam JSONL'de).
 const agg = {
   calls: 0,                    // toplam AI çağrısı
   successes: 0,                // HTTP-level başarılı çağrı (içerik döndü)
@@ -44,12 +24,6 @@ const agg = {
 const MAX_LATENCY_SAMPLES = 500; // p95 hesabı için son N gecikme örneği tutulur
 const latencySamples = [];
 
-// ---------------------------------------------------------------------------
-// PII sanitizasyonu: loga yazılan her serbest alan bilinen kimlik alanlarından
-// temizlenir. Vaka içeriği zaten kaydedilmediği için bu katman savunma amaçlıdır.
-// ---------------------------------------------------------------------------
-// Anahtarları alt-dize değil BÜTÜN TOKEN olarak kontrol eder: "outcome" içindeki
-// "tc" ya da "usage" içindeki "age" artık yanlış pozitif üretmez.
 const PII_TOKENS = new Set([
   'patient', 'name', 'age', 'sex', 'tc', 'tckn', 'kimlik', 'identity',
   'dob', 'birth', 'address', 'phone', 'email', 'ad', 'soyad', 'yas',
@@ -96,27 +70,9 @@ function writeJsonl(entry) {
     if (!fs.existsSync(LOGS_DIR)) fs.mkdirSync(LOGS_DIR, { recursive: true });
     fs.appendFileSync(METRICS_FILE, JSON.stringify(entry) + '\n', 'utf8');
   } catch {
-    // Metrik yazımı asla iş akışını bozmamalı (disk dolu, izin yok vb.)
   }
 }
 
-/**
- * Bir AI çağrısının teknik kaydını tutar. Provider katmanından çağrılır.
- * @param {object} evt
- * @param {string} evt.request_id - Pipeline'ın ürettiği istek kimliği
- * @param {number} evt.attempt - 1 = ilk deneme, 2+ = onarım denemesi
- * @param {string} evt.model
- * @param {string} evt.provider
- * @param {string} evt.prompt_version
- * @param {string} evt.schema_version
- * @param {number} evt.latency_ms - Sadece bu çağrının süresi
- * @param {string} evt.status - 'success' | 'error'
- * @param {string} [evt.finish_reason] - 'stop' | 'length' | ...
- * @param {number} [evt.prompt_tokens]
- * @param {number} [evt.completion_tokens]
- * @param {string} [evt.error_code] - Hata durumunda kod (AI_TIMEOUT, AI_UNAUTHORIZED...)
- * @param {string} [evt.error_message] - Hata durumunda teknik mesaj
- */
 function recordAiCall(evt) {
   const entry = {
     type: 'ai_call',
@@ -142,7 +98,6 @@ function recordAiCall(evt) {
       : null,
   };
 
-  // --- bellek içi özet ---
   agg.calls++;
   agg.latency_total_ms += evt.latency_ms || 0;
   if (latencySamples.length >= MAX_LATENCY_SAMPLES) latencySamples.shift();
@@ -168,18 +123,6 @@ function recordAiCall(evt) {
   writeJsonl(sanitize(entry));
 }
 
-/**
- * Bir isteğin parse/validasyon sonucunu kaydeder (istek başına bir kez).
- * @param {object} evt
- * @param {string} evt.request_id
- * @param {number} evt.attempts - Toplam deneme sayısı (1 = ilk seferde onaylandı)
- * @param {string} evt.outcome - 'success' | 'invalid_json' | 'error_before_parse'
- * @param {number} [evt.raw_schema_issues] - Ham model çıktısındaki şema ihlali sayısı
- * @param {string} [evt.prompt_version]
- * @param {string} [evt.model]
- * @param {string} [evt.provider]
- * @param {string} [evt.error_code]
- */
 function recordParseResult(evt) {
   const entry = {
     type: 'parse_result',
@@ -214,9 +157,6 @@ function recordParseResult(evt) {
   writeJsonl(sanitize(entry));
 }
 
-/**
- * Bellek içi özetin okunabilir hali (/api/metrics için).
- */
 function getSummary() {
   const parsed = agg.parse_success + agg.parse_fail;
   const latencies = [...latencySamples].sort((a, b) => a - b);
@@ -278,11 +218,6 @@ function getSummary() {
   };
 }
 
-/**
- * JSONL dosyasındaki ham kayıtlar üzerinden dosya-bazlı özet (restart'ı aşan gerçek metrikler).
- * Analitik araçları veya küçük raporlar için kullanılabilir.
- * @param {{limit?: number}} [opts] - Sondan en fazla n kayıt okunur
- */
 function getFileSummary(opts = {}) {
   const limit = opts.limit || 5000;
   let lines = [];
@@ -324,7 +259,6 @@ function getFileSummary(opts = {}) {
     delete m.latency_total_ms;
   }
 
-  // Parse kırılımı: JSONL'deki parse_result kayıtlarından model başına hesaplanır.
   for (const p of parseResults) {
     const key = `${p.provider || '?'}/${p.model || '?'}`;
     if (!byModel[key]) byModel[key] = { calls: 0, avg_latency_ms: 0 };

@@ -1,15 +1,6 @@
-// STRUCTURED OUTPUT ŞEMASI — TEK DOĞRULUK KAYNAĞI.
-// Modelin üretmesi gereken JSON'un makinece okunabilir tanımı.
-// Bu modül İKİ yerden kullanılır:
-//   1. server/prompts/systemPrompt.js  -> prompttaki şema bloğu BU nesneden üretilir
-//      (prompt ile doğrulayıcının sürüklenip ayrışması imkânsız hale gelir),
-//   2. server/validation/schemaValidator.js -> backend, model yanıtını BU şemaya göre doğrular.
-// Böylece "Tabii, işte analiziniz: ..." gibi JSON dışı çıktılar, eksik alanlar,
-// yanlış tipler ve enum ihlalleri kullanıcıya ulaşmadan sunucuda yakalanır.
 
 const SCHEMA_VERSION = '1.4.0';
 
-// Yeniden kullanılan tip tanımları
 const STRING_ARRAY = { type: 'array', items: { type: 'string' } };
 
 const CONTRADICTION_ASSESSMENT = {
@@ -36,9 +27,6 @@ const COMPARISON_ITEM = {
   },
 };
 
-// Yapılandırılmış gerekçe özeti ("AI neden bunu yaptı?"):
-// Bu blok modelin gizli düşünce zinciri DEĞİLDİR; modelden üç ayrı,
-// denetlenebilir liste olarak istenir. Frontend bu listeleri görselleştirir (✓ / ⚠ / ★).
 const REASONING = {
   type: 'object',
   description: 'Yapılandırılmış gerekçe özeti (gizli düşünce zinciri DEĞİL). Üç yapılandırılmış liste:',
@@ -266,11 +254,6 @@ const SECOND_OPINION = {
   },
 };
 
-// "Bir sonraki en değerli bilgi nedir?" motoru (ürünün ana motoru).
-// Akış: vaka -> mevcut belirsizlik -> eksik bilgi havuzu -> en yüksek ayırt edici
-// güce sahip TEK bilgi -> net soru. İleride bu seçim information gain ile
-// nicelendirilebilir; şema alanları bu ölçüme hazır (branch'li expected_outcome,
-// affected_diagnoses) yapıdadır.
 const NEXT_BEST_INFORMATION = {
   type: 'object',
   description: 'bir sonraki en değerli bilgi motoru: tanı tahmini DEĞİL, belirsizliği en çok azaltacak bilgiyi seçip soruya çevirir',
@@ -326,8 +309,6 @@ const NEXT_BEST_INFORMATION = {
 
 const ANALYSIS_SCHEMA = {
   type: 'object',
-  // Zorunlu alanlar: bunlar eksikse/yanlış tipse yanıt REDDEDİLİR ve model
-  // hata bildirimiyle bir kez daha çağrılır. Diğer alanlar lenient normalize edilir.
   required: ['case_summary', 'clinical_pattern', 'differential_diagnoses', 'uncertainty'],
   properties: {
     case_summary: { type: 'string', description: 'vakaya dair kısa ve nötr özet' },
@@ -471,11 +452,6 @@ const ANALYSIS_SCHEMA = {
   },
 };
 
-// ---------------------------------------------------------------------------
-// Prompt metni üretimi: şema nesnesi, sisteme gönderilen şema bloğuna çevrilir.
-// Böylece prompt ile backend doğrulayıcısı AYNI kaynaktan beslenir; biri
-// değişirse diğeri otomatik olarak birlikte değişir.
-// ---------------------------------------------------------------------------
 
 function pad(depth) {
   return '  '.repeat(depth);
@@ -488,11 +464,6 @@ function typeLabel(schema) {
   return types[0] || 'any';
 }
 
-/**
- * Şema düğümünü prompt bloğunda görünen sözde-JSON metnine çevirir.
- * @param {object} schema - Şema düğümü
- * @param {number} indent - Girinti seviyesi
- */
 function renderValue(schema, indent) {
   const desc = schema.description ? ` - ${schema.description}` : '';
   const label = typeLabel(schema);
@@ -521,10 +492,6 @@ function renderEntries(schema, indent) {
     .join('\n');
 }
 
-/**
- * Prompttaki "Your answer must be valid JSON matching exactly this schema:"
- * bölümüne konan blok. Backend doğrulamasıyla aynı kaynaktan üretilir.
- */
 function schemaToPromptText() {
   return `{\n${renderEntries(ANALYSIS_SCHEMA, 1)}\n}`;
 }

@@ -1,11 +1,3 @@
-// ci_audit_test.js — İddia denetçisi (claimAuditor) çevrimdışı testleri.
-// Dış ağ çağrısı yoktur; deterministik modüller üzerinde doğrulama yapar:
-//   1) Uydurma bulgu: vakada hiç geçmeyen iddia -> unsupported_finding işareti
-//   2) Gerçek bulgu: vakadaki veriyi paraphrase eden iddia -> işaret ÜRETİLMEZ
-//   3) Zayıflatıcı bulgunun destekleyici sunulması -> evidence_contradiction işareti
-//   4) Ölçülmemiş teste dayalı iddia -> unperformed_test_reference işareti
-//   5) Çelişki şiddeti uyuşmazlığı -> contradiction_mismatch işareti
-//   6) analyzeCase uçtan uca: audit_flags sonuç zarfında döner (stub ile)
 const path = require('path');
 const assert = require('assert');
 
@@ -37,7 +29,6 @@ const { buildEvidenceContext } = require(path.join(PROJECT, 'server/knowledge/ev
 const { parseAndValidateAiOutput } = require(path.join(PROJECT, 'server/pipeline/responseValidator.js'));
 const { auditClaims } = require(path.join(PROJECT, 'server/pipeline/claimAuditor.js'));
 
-// FMF profili taşıyan demo vaka (ci_evidence_test ile uyumlu).
 const PAYLOAD = {
   patient: { age: 21, sex: 'female' },
   symptoms: [
@@ -130,7 +121,6 @@ async function run() {
     assert(fmf, 'key_tests içeren aday yok');
     const keyTest = typeof fmf.key_tests[0] === 'object' ? fmf.key_tests[0].test : fmf.key_tests[0];
     const modelOutput = makeModelOutput({
-      // Karışık iddia: vakadaki gerçek veri + ölçülmemiş teste dayanan sonuç.
       supporting_findings: [`Hastada 3-4 haftada bir tekrarlayan ateş atakları görülüyor ve ${keyTest} sonucu pozitif olarak saptandı`],
     });
     const validated = parseAndValidateAiOutput(JSON.stringify(modelOutput), [], evidenceContext.candidates, evidenceContext.sources);

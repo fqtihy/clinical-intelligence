@@ -1,23 +1,10 @@
-// PROMPT MODÜLÜ: yeniden deneme (retry) talimatı üretici.
-// İlk yanıt geçersiz JSON veya token sınırı nedeniyle kesildiğinde modeli
-// daha kısa ve tam bir JSON üretmeye yönlendiren ek kullanıcı mesajı.
 
-/**
- * Önceki denemenin şema doğrulama hatalarını tek satırlık özetlere indirir.
- * Hata yoksa boş string döner (retry mesajına ekstra bölüm eklenmez).
- * @param {string[]} [errors] - summarizeSchemaErrors çıktısı
- */
 function schemaErrorSection(errors) {
   if (!Array.isArray(errors) || errors.length === 0) return '';
   return `SCHEMA VALIDATION ERRORS from your previous answer (fix exactly these and nothing else):
 ${errors.map((e) => `- ${e}`).join('\n')}`;
 }
 
-/**
- * @param {string[]} [validationErrors] - Önceki denemenin şema doğrulama hataları;
- *   verildiyse modele HANGİ alanların düzeltilmesi gerektiği açıkça söylenir
- *   (kör yeniden deneme yerine hedefli onarım).
- */
 function buildRetryInstruction(validationErrors = []) {
   const schemaErrors = schemaErrorSection(validationErrors);
   return `Your previous answer was invalid or was cut off because it exceeded the token limit.

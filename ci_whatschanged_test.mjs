@@ -1,5 +1,3 @@
-// "Neler değişti?" birim testi: results.js içinden gerçek fonksiyon kodunu çeker,
-// senaryoyu çalıştırır: v1 FMF yüksek -> v2 döküntü+ferritin eklendi, FMF orta, AOSD yüksek.
 import { readFileSync } from 'node:fs';
 
 const src = readFileSync(new URL('./public/js/results.js', import.meta.url), 'utf8');
@@ -11,7 +9,6 @@ function extract(startMarker, endMarker) {
   return src.slice(start, end);
 }
 
-// esc() stub (testte HTML kaçış gerekmez)
 const esc = (s) => String(s ?? '');
 const code = [
   extract('function computeDdxDelta', 'function normalizeDxNameForDelta'),
@@ -74,7 +71,6 @@ for (const c of ddx.changed) {
 for (const d of ddx.added) console.log(`${d.name} (yeni, ${d.relevance})`);
 for (const r of ddx.removed) console.log(`${r.name} (çıkarıldı)`);
 
-// Beklentiler
 const expect = (cond, msg) => { if (!cond) { console.error(`FAIL: ${msg}`); process.exitCode = 1; } };
 expect(deltaItems.some((i) => i.kind === 'add' && i.text === 'Döküntü'), 'döküntü çipi tespit edilmedi');
 expect(deltaItems.some((i) => i.kind === 'add' && i.text.includes('Ferritin') && i.text.includes('1450')), 'ferritin tespit edilmedi');

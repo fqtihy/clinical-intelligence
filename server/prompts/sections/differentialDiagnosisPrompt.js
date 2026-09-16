@@ -1,5 +1,3 @@
-// PROMPT BÖLÜMÜ: differential_diagnosis_prompt
-// Ayırıcı tanı sıralama kuralları: semptom sayma değil, ayırt edicilik temelli sıralama.
 module.exports = {
   id: 'differential_diagnosis',
   title: 'DIFFERENTIAL DIAGNOSIS RANKING',

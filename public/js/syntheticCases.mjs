@@ -1,5 +1,3 @@
-// PII içermeyen, eğitim/test amaçlı sentetik vaka havuzu.
-// typeLabel klinik tanıyı ifşa etmeden test amacını belirtir.
 const CASES = [
   {
     id: 'complete-periodic-fever', typeLabel: 'Tam vaka',

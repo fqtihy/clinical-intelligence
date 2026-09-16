@@ -1,5 +1,3 @@
-// Hash tabanlı mini router: görünümleri yükler, aktif menüyü işaretler,
-// sonuç ekranı -> yeniden analiz ve taslak -> form akışlarını besler.
 import { renderDashboard } from './dashboard.js';
 import { renderNewCase } from './newCase.js';
 import { renderHistory } from './history.js';
@@ -11,7 +9,6 @@ import { renderSyntheticCompare } from './syntheticCompare.js';
 
 const appEl = document.getElementById('app');
 
-/** "#/results/abc?prev=xyz" gibi hash'i {name, params} olarak ayrıştırır. */
 function parseHash(hash) {
   const raw = (hash || '').replace(/^#\/?/, '');
   const [pathPart, queryPart] = raw.split('?');
@@ -36,8 +33,6 @@ function setActiveNav(name) {
 }
 
 function newCaseOptions(params) {
-  // Öncelik: ?draft=kimlik -> taslak; yoksa yeniden analiz akışı -> form verisi;
-  // yoksa boş form. Yeniden analiz verisi tek seferliktir; okunduktan sonra temizlenir.
   if (params.draft) {
     const draft = getDraft(params.draft);
     if (draft) return { data: draft.data || {}, draftId: draft.id };
@@ -91,7 +86,6 @@ function renderRoute() {
 
 window.addEventListener('hashchange', renderRoute);
 
-// İlk yükleme: boş hash'i dashboard'a yönlendir.
 if (!window.location.hash || window.location.hash === '#') {
   window.location.replace('#/dashboard');
 } else {

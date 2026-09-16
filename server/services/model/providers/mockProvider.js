@@ -1,5 +1,3 @@
-// Mock provider: API anahtarı olmadan hat ucundan uca doğrulama (E2E smoke test)
-// için deterministik, şemaya uygun minimal JSON döndürür. Gerçek analiz yapmaz.
 const content = JSON.stringify({
   case_summary: 'Mock çıktı: yapılandırılmış vaka alındı, hat doğrulandı.',
   clinical_pattern: 'Mock provider yalnızca pipeline bağlantısını doğrular.',

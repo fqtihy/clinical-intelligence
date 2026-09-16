@@ -1,6 +1,3 @@
-// Yerel veri deposu (localStorage).
-// MVP'de hesap sistemi olmadığı için analiz geçmişi ve taslaklar anonim olarak
-// yalnızca tarayıcıda saklanır. Hasta adı, TC kimlik vb. hiçbir tanımlayıcı tutulmaz.
 
 const ANALYSES_KEY = 'ci.analyses';
 const DRAFTS_KEY = 'ci.drafts';
@@ -43,11 +40,9 @@ function writeList(key, list) {
   try {
     localStorage.setItem(key, JSON.stringify(list));
   } catch {
-    /* depolama dolu olabilir; sessizce geç */
   }
 }
 
-/* ---------------- Analizler ---------------- */
 
 export function getAnalyses() {
   purgeExpired();
@@ -71,10 +66,6 @@ export function deleteAnalysis(id) {
   writeList(ANALYSES_KEY, readList(ANALYSES_KEY).filter((a) => a.id !== id));
 }
 
-/* ---------------- Vakalar (case history) ---------------- */
-// Her vaka, sıralı bir numara (Case #001) ve zaman içinde sürümlerden (v1, v2, ...)
-// oluşur. Analizler kendi listelerinde durmaya devam eder; vaka/sürüm bilgisi
-// analiz nesnesinin üzerine (caseId, caseNumber, version, changeNote) yazılır.
 
 function readCases() {
   try {
@@ -90,7 +81,6 @@ function writeCases(cases) {
   try {
     localStorage.setItem(CASES_KEY, JSON.stringify(cases));
   } catch {
-    /* depolama dolu olabilir; sessizce geç */
   }
 }
 
@@ -104,13 +94,11 @@ export function getCase(id) {
   return readCases().find((c) => c.id === id) || null;
 }
 
-/** Sıradaki vaka numarasını üretir: Case #001, #002, ... */
 function nextCaseNumber() {
   const max = readCases().reduce((m, c) => Math.max(m, c.caseNumber || 0), 0);
   return max + 1;
 }
 
-/** Yeni bir vaka kaydı oluşturur (henüz analizi yok). */
 export function createCase() {
   const c = {
     id: `k_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`,
@@ -122,7 +110,6 @@ export function createCase() {
   return c;
 }
 
-/** Vakanın son etkinlik zamanını günceller. */
 export function touchCase(id) {
   const cases = readCases();
   const c = cases.find((x) => x.id === id);
@@ -132,20 +119,17 @@ export function touchCase(id) {
   }
 }
 
-/** Bir vakanın sürümlerini (analizlerini) v1 -> vN sırasıyla döndürür. */
 export function getCaseVersions(caseId) {
   return readList(ANALYSES_KEY)
     .filter((a) => a.caseId === caseId)
     .sort((a, b) => (a.version || 0) - (b.version || 0));
 }
 
-/** Vakayı ve tüm sürümlerini (analizlerini) siler. */
 export function deleteCase(id) {
   writeCases(readCases().filter((c) => c.id !== id));
   writeList(ANALYSES_KEY, readList(ANALYSES_KEY).filter((a) => a.caseId !== id));
 }
 
-/* ---------------- Taslaklar ---------------- */
 
 export function getDrafts() {
   purgeExpired();
@@ -170,7 +154,6 @@ export function deleteDraft(id) {
   writeList(DRAFTS_KEY, readList(DRAFTS_KEY).filter((d) => d.id !== id));
 }
 
-/* ---------------- İstatistikler ---------------- */
 
 export function getStats() {
   purgeExpired();
@@ -184,7 +167,6 @@ export function getStats() {
   };
 }
 
-/** Tüm yerel veriyi temizler (Ayarlar sayfası). */
 export function clearAllLocalData() {
   APP_KEYS.forEach((key) => localStorage.removeItem(key));
   sessionStorage.removeItem('ci.formData');
@@ -195,7 +177,6 @@ export function getRetentionDays() {
   return RETENTION_DAYS;
 }
 
-/* ---------------- Yapılandırılmış geri bildirim ---------------- */
 
 export function getAnalysisFeedback(analysisId) {
   purgeExpired();

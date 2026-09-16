@@ -1,7 +1,3 @@
-// PROMPT BÖLÜMÜ: system_prompt
-// Modelin rolü ve temel prensipleri: kesin tanı yok, doktorun kararı desteklenir,
-// uydurma yok, belirsizlik açıkça ifade edilir.
-// Her bölüm modülü ortak sözleşmeyi izler: { id, title, build: () => string }.
 module.exports = {
   id: 'system',
   title: 'ROLE & CORE PRINCIPLES',

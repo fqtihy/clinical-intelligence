@@ -1,5 +1,3 @@
-// PROMPT BÖLÜMÜ: contradiction_prompt
-// Çelişki motoru: her tanıyı zayıflatan bulgular açıkça raporlanır; saklanmaz.
 module.exports = {
   id: 'contradiction',
   title: 'CONTRADICTION ENGINE',
